@@ -1,6 +1,7 @@
 import {
   createIcons,
   Paintbrush,
+  PaintBucket,
   Pencil,
   SprayCan,
   Eraser,
@@ -22,7 +23,6 @@ import {
   Layers,
   Sparkles,
   Palette,
-  Heart,
   X,
   Check,
   ImageDown,
@@ -50,14 +50,23 @@ import {
   download,
   filename,
 } from "./project.js";
+import { fillArea } from "./fill.js";
+import { backgroundPreview } from "./backgrounds.js";
 import { canvasPoint, drawStroke, drawShape } from "./drawing.js";
 
-import { STAMPS, drawStamp } from "./stamps.js";
+import {
+  STAMPS,
+  STAMP_VARIANTS,
+  drawStamp,
+  drawStampGesture,
+} from "./stamps.js";
+import { PATTERNS, patternInfo, patternTile } from "./patterns.js";
 import { createSand } from "./sand.js";
 import { nextColor, shapeColor } from "./colors.js";
 
 const iconSet = {
   Paintbrush,
+  PaintBucket,
   Pencil,
   SprayCan,
   Eraser,
@@ -79,7 +88,6 @@ const iconSet = {
   Layers,
   Sparkles,
   Palette,
-  Heart,
   X,
   Check,
   ImageDown,
@@ -113,6 +121,7 @@ const toolsList = [
   ["brush", "Pędzel", "paintbrush"],
   ["pencil", "Ołówek", "pencil"],
   ["spray", "Spray", "spray-can"],
+  ["fill", "Wypełnij", "paint-bucket"],
   ["eraser", "Gumka", "eraser"],
   ["line", "Linia", "minus"],
   ["circle", "Koło", "circle"],
@@ -140,11 +149,18 @@ let sandFrame;
 let sleeping = false;
 const stampTools = STAMPS.map(([id]) => id);
 const shapes = ["line", "circle", "rectangle"];
+const previewTools = [...shapes, ...stampTools];
+const chosenVariants = Object.fromEntries(
+  Object.entries(STAMP_VARIANTS).map(([tool, variants]) => [
+    tool,
+    variants[0][0],
+  ]),
+);
 
 const app = document.querySelector("#app");
 app.innerHTML = `
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Ala Paint — strona główna"><span class="brand-mark">${icon("paintbrush")}</span><span>Ala<span class="brand-accent">Paint</span><small>MAŁA PRACOWNIA, WIELKA WYOBRAŹNIA</small></span></a>
+    <a class="brand" href="./" aria-label="Ala Paint — strona główna"><span class="brand-mark">${icon("paintbrush")}</span><span>Ala<span class="brand-accent">Paint</span><small>mała pracownia,<br>wielka wyobraźnia</small></span></a>
     <button id="sleep" class="button subtle">${icon("moon")}<span>Tryb ciemny</span></button>
     <div class="file-actions">
       <button id="new" class="button subtle">${icon("plus")}<span>Nowy</span></button>
@@ -165,14 +181,16 @@ app.innerHTML = `
       <section class="control-section"><div class="section-heading"><h2>Zwierzątka Ali</h2>${icon("paw-print")}</div>
         <div class="tool-grid stamp-grid">${STAMPS.map(([id, label, symbol]) => `<button class="tool" data-tool="${id}" aria-pressed="false">${icon(symbol)}<span>${label}</span></button>`).join("")}</div>
         <div id="stamp-controls" hidden>
-          <label for="stamp-size">Wielkość zwierzątka <output id="stamp-size-value">100</output></label><input id="stamp-size" type="range" min="30" max="300" value="100">
+          <div id="stamp-variants" class="variant-grid" role="group" aria-label="Odmiany zwierzątek"></div>
           <label for="stamp-rotation">Obrót <output id="stamp-rotation-value">0°</output></label><input id="stamp-rotation" type="range" min="-180" max="180" step="15" value="0">
-          <p class="hint">Kliknij na kartce, aby przybić stempelek.</p>
+          <p class="hint">Naciśnij i przeciągnij, aby wybrać wielkość dodatku. Możesz też kliknąć, aby przybić stempelek.</p>
         </div>
       </section>
       <section class="control-section"><div class="section-heading"><h2>Kolory</h2>${icon("palette")}</div>
         <div class="color-grid">${colors.map(([color, label], index) => `<button class="swatch ${index === 0 ? "selected" : ""}" style="--swatch:${color}" data-color="${color}" aria-label="${label}" aria-pressed="${index === 0}" title="${label}"></button>`).join("")}</div>
         <button class="rainbow-button" data-color="rainbow" aria-pressed="false"><span class="rainbow-dot" aria-hidden="true"></span>Tęczowy</button>
+        <h3 class="patterns-heading">Zwierzęce wzory</h3>
+        <div class="pattern-grid">${PATTERNS.map(([id, label]) => `<button class="pattern-button" data-color="${id}" aria-pressed="false"><canvas width="64" height="40" data-pattern-preview="${id}" aria-hidden="true"></canvas><span>${label}</span></button>`).join("")}</div>
         <label class="custom-color"><input id="custom-color" type="color" value="#7655ce" aria-label="Własny kolor"><span>Twój własny kolor</span><span class="plus-label">+</span></label>
       </section>
       <section class="control-section size-control"><div class="section-heading"><label for="brush-size">Wielkość</label><output id="size-value" for="brush-size">12</output></div>
@@ -194,13 +212,13 @@ app.innerHTML = `
     </section>
     <aside class="details-panel" aria-label="Warstwy i tło">
       <section class="panel layers-panel"><div class="section-heading"><h2>${icon("layers")} Warstwy</h2><span id="layer-count" class="count">1 / 12</span></div><p class="section-description">Jak przezroczyste kartki,<br>jedna na drugiej.</p><button id="add-layer" class="button add-layer">${icon("plus")} Dodaj warstwę</button><div id="layer-list" class="layer-list"></div>
-        <div class="layer-actions"><button id="layer-up" class="icon-button" aria-label="Przesuń warstwę wyżej" title="Przesuń wyżej">${icon("arrow-up")}</button><button id="layer-down" class="icon-button" aria-label="Przesuń warstwę niżej" title="Przesuń niżej">${icon("arrow-down")}</button><span></span><button id="delete-layer" class="icon-button danger" aria-label="Usuń warstwę" title="Usuń warstwę">${icon("trash-2")}</button></div><p class="hint layer-hint">Rysujesz na zaznaczonej warstwie.</p>
+        <div class="layer-actions"><button id="layer-up" class="icon-button" aria-label="Przesuń warstwę wyżej" title="Przesuń wyżej">${icon("arrow-up")}<span>Wyżej</span></button><button id="layer-down" class="icon-button" aria-label="Przesuń warstwę niżej" title="Przesuń niżej">${icon("arrow-down")}<span>Niżej</span></button><span></span><button id="delete-layer" class="icon-button danger" aria-label="Usuń warstwę" title="Usuń warstwę">${icon("trash-2")}<span>Usuń</span></button></div><p class="hint layer-hint">Rysujesz na zaznaczonej warstwie.</p>
       </section>
       <section class="panel background-panel"><div class="section-heading"><h2>Tło kartki</h2>${icon("image-down")}</div><p class="section-description">Od czego dziś zaczniemy?</p><div class="background-grid">${BACKGROUNDS.map((bg) => `<button data-background="${bg.id}" class="background-choice" aria-pressed="${bg.id === "white"}"><span class="background-sample ${bg.id === "transparent" ? "checkerboard" : ""}" style="--background:${bg.color || "transparent"}">${bg.id === "white" ? icon("check") : ""}</span><span>${bg.name}</span></button>`).join("")}</div></section>
       <div class="future-card"><span class="eyebrow">JESZCZE WIĘCEJ WYOBRAŹNI</span><div class="little-eyes"><span></span><span></span><b>✧</b></div><h3>Postacie z charakterem</h3><p>Oczy, minki i inne cuda…<br>Wybierz oczy, uszy, łapy lub ogon<br>i stwórz własnego przyjaciela!</p><span class="soon">Już w przyborniku!</span></div>
     </aside>
   </main>
-  <footer><span>Stworzone dla Ali i jej wyobraźni ${icon("heart")}</span><span>Rysunki zostają u ciebie · bez konta, bez pośpiechu</span></footer>
+  <footer><div class="footer-credits"><a href="https://github.com/alicjachaba/ala-paint" target="_blank" rel="noopener noreferrer">AlaPaint na GitHubie</a><span class="footer-notes">Rysunki zostają u ciebie · bez konta, bez pośpiechu</span><span>stworzone przez Alę z małą pomocą Taty</span></div></footer>
   <input id="file-input" type="file" accept=".json,application/json" hidden>
   <div id="toast" role="status" aria-live="polite" hidden></div>
   <dialog id="confirm-dialog"><form method="dialog"><div class="dialog-icon">${icon("sparkles")}</div><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="dialog-actions"><button value="cancel" class="button subtle" autofocus>Wróć do rysowania</button><button value="confirm" class="button primary" id="confirm-button">Tak, zaczynamy</button></div></form></dialog>
@@ -215,6 +233,8 @@ document.body.append(sleepScreen);
 const $ = (selector) => document.querySelector(selector);
 const canvas = $("#drawing");
 const context = canvas.getContext("2d");
+const previewCanvas = document.createElement("canvas");
+const previewContext = previewCanvas.getContext("2d");
 const activeLayer = () =>
   project.layers.find((layer) => layer.id === project.activeLayerId);
 const snapshot = () => JSON.stringify(serialize(project));
@@ -244,20 +264,37 @@ function confirmAction(title, message, button = "Tak, zaczynamy") {
   );
 }
 
+function drawPreview(target) {
+  const draw = stampTools.includes(gesture.settings.tool)
+    ? drawStampGesture
+    : drawShape;
+  draw(target, gesture.start, gesture.last, gesture.settings);
+}
+
 function renderCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   paintBackground(context, project);
   project.layers.forEach((layer) => {
     if (!layer.visible) return;
-    context.drawImage(layer.canvas, 0, 0);
-    if (gesture?.sand && layer.id === gesture.layer.id)
-      gesture.sand.draw(context);
     if (
       gesture &&
-      shapes.includes(gesture.settings.tool) &&
+      previewTools.includes(gesture.settings.tool) &&
       layer.id === gesture.layer.id
-    )
-      drawShape(context, gesture.start, gesture.last, gesture.settings);
+    ) {
+      // Podgląd powstaje na kopii warstwy, aby wyglądał tak samo po puszczeniu.
+      if (previewCanvas.width !== canvas.width)
+        previewCanvas.width = canvas.width;
+      if (previewCanvas.height !== canvas.height)
+        previewCanvas.height = canvas.height;
+      previewContext.clearRect(0, 0, canvas.width, canvas.height);
+      previewContext.drawImage(layer.canvas, 0, 0);
+      drawPreview(previewContext);
+      context.drawImage(previewCanvas, 0, 0);
+    } else {
+      context.drawImage(layer.canvas, 0, 0);
+    }
+    if (gesture?.sand && layer.id === gesture.layer.id)
+      gesture.sand.draw(context);
   });
 }
 
@@ -351,18 +388,24 @@ function renderLayers() {
 function updateHint() {
   $("#canvas-hint").textContent = !activeLayer().visible
     ? "Ta warstwa jest ukryta. Włącz ją przyciskiem oka."
-    : settings.tool === "sand"
-      ? "Przytrzymaj, aby sypać. Piasek zatrzyma się na kreskach tej warstwy."
-      : stampTools.includes(settings.tool)
-        ? "Wybierz wielkość i obrót, a potem kliknij na kartce"
-        : settings.tool === "text"
-          ? "Wpisz tekst w przyborniku i kliknij na kartce"
-          : shapes.includes(settings.tool)
-            ? "Przeciągnij po kartce, aby narysować kształt"
-            : "Wybierz kolor i narysuj coś swojego";
+    : settings.tool === "fill"
+      ? "Kliknij zamknięty obszar na wybranej warstwie, aby go wypełnić."
+      : settings.tool === "sand"
+        ? "Przytrzymaj, aby sypać. Piasek zatrzyma się na kreskach tej warstwy."
+        : stampTools.includes(settings.tool)
+          ? "Naciśnij i przeciągnij, aby narysować zwierzęcy dodatek"
+          : settings.tool === "text"
+            ? "Wpisz tekst w przyborniku i kliknij na kartce"
+            : shapes.includes(settings.tool)
+              ? "Przeciągnij po kartce, aby narysować kształt"
+              : "Wybierz kolor i narysuj coś swojego";
 }
 
 function renderAll() {
+  $(".paper").style.setProperty(
+    "--paper-ratio",
+    project.width / project.height,
+  );
   if (canvas.width !== project.width) canvas.width = project.width;
   if (canvas.height !== project.height) canvas.height = project.height;
   $("#project-name").value = project.name;
@@ -382,17 +425,64 @@ function renderAll() {
 
 function setColor(color) {
   settings.color = color;
-  if (color !== "rainbow") $("#custom-color").value = color;
+  if (color.startsWith("#")) $("#custom-color").value = color;
   document.documentElement.style.setProperty(
     "--drawing-color",
-    color === "rainbow" ? "#ec4899" : color,
+    color === "rainbow" ? "#ec4899" : patternInfo(color)?.[2] || color,
   );
   document.querySelectorAll("[data-color]").forEach((button) => {
     const selected = button.dataset.color === color;
     button.classList.toggle("selected", selected);
     button.setAttribute("aria-pressed", selected);
   });
+  renderStampVariants();
 }
+
+function renderStampVariants() {
+  const variants = STAMP_VARIANTS[settings.tool];
+  if (!variants) return;
+  const list = $("#stamp-variants");
+  list.replaceChildren();
+  for (const [variant, label] of variants) {
+    const button = document.createElement("button");
+    button.className = "variant-button";
+    button.dataset.variant = variant;
+    button.setAttribute(
+      "aria-pressed",
+      variant === chosenVariants[settings.tool],
+    );
+    const preview = document.createElement("canvas");
+    preview.width = 100;
+    preview.height = 80;
+    preview.setAttribute("aria-hidden", "true");
+    drawStamp(
+      preview.getContext("2d"),
+      { x: 50, y: 40 },
+      {
+        tool: settings.tool,
+        variant,
+        stampSize: 72,
+        color: settings.color,
+      },
+    );
+    const name = document.createElement("span");
+    name.textContent = label;
+    button.append(preview, name);
+    button.onclick = () => {
+      chosenVariants[settings.tool] = variant;
+      list
+        .querySelectorAll("button")
+        .forEach((item) => item.setAttribute("aria-pressed", item === button));
+    };
+    list.append(button);
+  }
+}
+
+document.querySelectorAll("[data-pattern-preview]").forEach((preview) => {
+  preview
+    .getContext("2d")
+    .drawImage(patternTile(preview.dataset.patternPreview), 0, 0);
+});
 
 document.querySelectorAll("[data-tool]").forEach(
   (button) =>
@@ -404,6 +494,8 @@ document.querySelectorAll("[data-tool]").forEach(
       });
       $("#text-controls").hidden = settings.tool !== "text";
       $("#stamp-controls").hidden = !stampTools.includes(settings.tool);
+      $(".size-control").hidden = settings.tool === "fill";
+      renderStampVariants();
       canvas.style.cursor = settings.tool === "text" ? "text" : "crosshair";
       updateHint();
     }),
@@ -411,10 +503,6 @@ document.querySelectorAll("[data-tool]").forEach(
 document
   .querySelectorAll("[data-color]")
   .forEach((button) => (button.onclick = () => setColor(button.dataset.color)));
-$("#stamp-size").oninput = (event) => {
-  settings.stampSize = Number(event.target.value);
-  $("#stamp-size-value").value = settings.stampSize;
-};
 $("#stamp-rotation").oninput = (event) => {
   settings.rotation = Number(event.target.value);
   $("#stamp-rotation-value").value = `${settings.rotation}°`;
@@ -428,6 +516,11 @@ $("#brush-size").oninput = (event) => {
     `${Math.min(38, settings.size)}px`,
   );
 };
+for (const background of BACKGROUNDS.filter((bg) => bg.landscape)) {
+  const sample = $(`[data-background="${background.id}"] .background-sample`);
+  sample.style.backgroundImage = `url(${backgroundPreview(background.id)})`;
+  sample.style.backgroundSize = "cover";
+}
 document.querySelectorAll("[data-background]").forEach(
   (button) =>
     (button.onclick = () =>
@@ -453,11 +546,8 @@ canvas.addEventListener("pointerdown", (event) => {
   const point = canvasPoint(event, canvas);
   const layer = activeLayer();
   const before = snapshot();
-  if (stampTools.includes(settings.tool)) {
-    drawStamp(layer.canvas.getContext("2d"), point, {
-      ...settings,
-      color: nextColor(settings),
-    });
+  if (settings.tool === "fill") {
+    fillArea(layer.canvas, point, settings);
     commit(before);
     renderCanvas();
     return;
@@ -494,7 +584,7 @@ canvas.addEventListener("pointerdown", (event) => {
     last: point,
     before,
     layer,
-    settings: { ...settings },
+    settings: { ...settings, variant: chosenVariants[settings.tool] },
   };
   canvas.setPointerCapture(event.pointerId);
   if (settings.tool === "sand") {
@@ -503,7 +593,7 @@ canvas.addEventListener("pointerdown", (event) => {
     gesture.lastFrame = performance.now();
     gesture.sand.pour(point, settings.size, nextColor(gesture.settings));
     sandFrame = requestAnimationFrame(animateSand);
-  } else if (!shapes.includes(settings.tool))
+  } else if (!previewTools.includes(settings.tool))
     drawStroke(layer.canvas.getContext("2d"), point, point, gesture.settings);
   renderCanvas();
 });
@@ -512,7 +602,7 @@ canvas.addEventListener("pointermove", (event) => {
   const samples = event.getCoalescedEvents?.();
   for (const sample of samples?.length ? samples : [event]) {
     const point = canvasPoint(sample, canvas);
-    if (!gesture.sand && !shapes.includes(gesture.settings.tool))
+    if (!gesture.sand && !previewTools.includes(gesture.settings.tool))
       drawStroke(
         gesture.layer.canvas.getContext("2d"),
         gesture.last,
@@ -533,7 +623,7 @@ function finishGesture(event) {
   }
   if (event.type === "pointerup") {
     const point = canvasPoint(event, canvas);
-    if (!gesture.sand && !shapes.includes(gesture.settings.tool))
+    if (!gesture.sand && !previewTools.includes(gesture.settings.tool))
       drawStroke(
         gesture.layer.canvas.getContext("2d"),
         gesture.last,
@@ -542,13 +632,11 @@ function finishGesture(event) {
       );
     gesture.last = point;
   }
-  if (shapes.includes(gesture.settings.tool))
-    drawShape(
-      gesture.layer.canvas.getContext("2d"),
-      gesture.start,
-      gesture.last,
-      gesture.settings,
-    );
+  if (
+    previewTools.includes(gesture.settings.tool) &&
+    (event.type === "pointerup" || !stampTools.includes(gesture.settings.tool))
+  )
+    drawPreview(gesture.layer.canvas.getContext("2d"));
   settings.hue = gesture.settings.hue;
   const before = gesture.before;
   const pointerId = gesture.pointerId;

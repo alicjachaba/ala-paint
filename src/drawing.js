@@ -1,3 +1,4 @@
+import { patternPaint } from "./patterns.js";
 import { nextColor, shapeColor } from "./colors.js";
 
 // Współrzędne rysunku są niezależne od wielkości płótna na ekranie.
@@ -34,8 +35,8 @@ function solidStroke(context, from, to, { tool, color, size }) {
   context.save();
   context.lineCap = "round";
   context.lineJoin = "round";
-  context.strokeStyle = color;
-  context.fillStyle = color;
+  context.strokeStyle = patternPaint(color);
+  context.fillStyle = patternPaint(color);
   context.lineWidth = tool === "pencil" ? Math.max(1, size / 3) : size;
   if (tool === "eraser") context.globalCompositeOperation = "destination-out";
   if (tool === "spray") {

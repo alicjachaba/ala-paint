@@ -1,15 +1,10 @@
+import { BACKGROUNDS, paintBackground } from "./backgrounds.js";
+export { BACKGROUNDS, paintBackground } from "./backgrounds.js";
+
 // Projekt przechowuje osobny, przezroczysty obraz dla każdej warstwy.
 export const PROJECT_VERSION = 1;
 export const MAX_LAYERS = 12;
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
-export const BACKGROUNDS = [
-  { id: "white", name: "Białe", color: "#ffffff" },
-  { id: "cream", name: "Waniliowe", color: "#fff5df" },
-  { id: "mint", name: "Miętowe", color: "#e7f6ef" },
-  { id: "sky", name: "Niebo", color: "#e4f1ff" },
-  { id: "pink", name: "Różowe", color: "#ffedf3" },
-  { id: "transparent", name: "Przezroczyste", color: null },
-];
 export const FONTS = [
   { name: "Przyjazna", family: '"Trebuchet MS", Arial, sans-serif' },
   { name: "Komiksowa", family: '"Comic Sans MS", "Chalkboard SE", cursive' },
@@ -168,14 +163,6 @@ export async function deserialize(data) {
     activeLayerId: data.activeLayerId,
     layers,
   };
-}
-
-export function paintBackground(context, project) {
-  const background = BACKGROUNDS.find((item) => item.id === project.background);
-  if (background.color) {
-    context.fillStyle = background.color;
-    context.fillRect(0, 0, project.width, project.height);
-  }
 }
 
 export function flatten(project) {

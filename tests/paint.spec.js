@@ -335,7 +335,6 @@ test("każde zwierzątko daje się cofnąć, obrócić i zachować w projekcie",
   const blank = await imageOf(page);
   for (const name of ["Oczy", "Ogon", "Uszy", "Łapy"]) {
     await page.getByRole("button", { name, exact: true }).click();
-    await setRange(page, "#stamp-size", 150);
     await setRange(page, "#stamp-rotation", 45);
     await page.locator("#drawing").click({ position: { x: 140, y: 120 } });
     expect(await imageOf(page)).not.toBe(blank);
@@ -512,4 +511,503 @@ test("piasek zatrzymuje się także na białych pikselach, a anulowanie dotyku k
   const settled = await imageOf(page);
   await page.waitForTimeout(150);
   expect(await imageOf(page)).toBe(settled);
+});
+
+async function dragPreview(page, start, end) {
+  const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const screen = (point) => ({
+    x: box.x + (point.x * box.width) / 960,
+    y: box.y + (point.y * box.height) / 640,
+  });
+  const from = screen(start);
+  const to = screen(end);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 6 });
+}
+
+async function paintedBounds(page) {
+  return page.locator("#drawing").evaluate((canvas) => {
+    const data = canvas.getContext("2d").getImageData(0, 0, 960, 640).data;
+    let left = 960,
+      right = -1,
+      top = 640,
+      bottom = -1;
+    for (let y = 0; y < 640; y++) {
+      for (let x = 0; x < 960; x++) {
+        const i = (y * 960 + x) * 4;
+        if (data[i] < 245 || data[i + 1] < 245 || data[i + 2] < 245) {
+          left = Math.min(left, x);
+          right = Math.max(right, x);
+          top = Math.min(top, y);
+          bottom = Math.max(bottom, y);
+        }
+      }
+    }
+    return {
+      left,
+      right,
+      top,
+      bottom,
+      width: right - left + 1,
+      height: bottom - top + 1,
+    };
+  });
+}
+
+test("zwierzątka rosną przy przeciąganiu w obu kierunkach, a podgląd nie zostawia śladów", async ({
+  page,
+}) => {
+  const blank = await imageOf(page);
+  for (const tool of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+    await page.getByRole("button", { name: tool, exact: true }).click();
+    await dragPreview(page, { x: 150, y: 150 }, { x: 650, y: 550 });
+    const large = await paintedBounds(page);
+    expect(large.width).toBeGreaterThan(300);
+    expect(large.height).toBeGreaterThan(180);
+    // Zmniejszenie dodatku usuwa poprzedni podgląd, bez śladów na warstwie.
+    const box = await page.locator("#drawing").boundingBox();
+    await page.mouse.move(
+      box.x + (350 * box.width) / 960,
+      box.y + (310 * box.height) / 640,
+    );
+    const preview = await imageOf(page);
+    const small = await paintedBounds(page);
+    expect(small.right).toBeLessThanOrEqual(355);
+    expect(small.bottom).toBeLessThanOrEqual(315);
+    await page.mouse.up();
+    expect(await imageOf(page)).toBe(preview);
+    await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+    await expect(page.locator("#undo")).toBeDisabled();
+    await stroke(page, { x: 350, y: 310 }, { x: 150, y: 150 });
+    expect(await imageOf(page)).toBe(preview);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+});
+
+test("wszystkie odmiany zwierzątek mają różne kształty i zapamiętany wybór", async ({
+  page,
+}) => {
+  const blank = await imageOf(page);
+  for (const tool of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+    await page.getByRole("button", { name: tool, exact: true }).click();
+    const choices = page.locator("#stamp-variants button");
+    await expect(choices).toHaveCount(4);
+    const images = new Set();
+    for (let index = 0; index < 4; index++) {
+      await choices.nth(index).click();
+      await expect(choices.nth(index)).toHaveAttribute("aria-pressed", "true");
+      await stroke(page, { x: 250, y: 150 }, { x: 650, y: 500 });
+      const image = await imageOf(page);
+      expect(image).not.toBe(blank);
+      images.add(image);
+      await page.locator("#undo").click();
+      await expect.poll(() => imageOf(page)).toBe(blank);
+    }
+    expect(images.size).toBe(4);
+    await page.getByRole("button", { name: "Pędzel", exact: true }).click();
+    await page.getByRole("button", { name: tool, exact: true }).click();
+    await expect(choices.nth(3)).toHaveAttribute("aria-pressed", "true");
+  }
+});
+
+test("anulowanie gestu usuwa podgląd dodatku i chroni wcześniejszy rysunek", async ({
+  page,
+}) => {
+  await stroke(page);
+  const before = await imageOf(page);
+  await page.getByRole("button", { name: "Uszy", exact: true }).click();
+  await dragPreview(page, { x: 400, y: 100 }, { x: 700, y: 400 });
+  expect(await imageOf(page)).not.toBe(before);
+  await page
+    .locator("#drawing")
+    .dispatchEvent("pointercancel", { pointerId: 1, pointerType: "mouse" });
+  await page.mouse.up();
+  expect(await imageOf(page)).toBe(before);
+  await page.locator("#undo").click();
+  await expect(page.locator("#undo")).toBeDisabled();
+});
+
+test("zwierzęce wzory malują wieloma barwami, cofają się i zachowują w projekcie oraz eksporcie", async ({
+  page,
+}) => {
+  await page
+    .getByRole("button", { name: "Przezroczyste", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Dodaj warstwę", exact: true })
+    .click();
+  const blank = await imageOf(page);
+  await setRange(page, "#brush-size", 70);
+  const looks = new Set();
+  for (const name of [
+    "Tygrysie paski",
+    "Kocie cętki",
+    "Żyrafa",
+    "Zebra",
+    "Futerko",
+  ]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await stroke(page, { x: 150, y: 200 }, { x: 750, y: 200 });
+    const colors = await page.locator("#drawing").evaluate((canvas) => {
+      const data = canvas.getContext("2d").getImageData(200, 180, 64, 40).data;
+      const colors = new Set();
+      for (let i = 0; i < data.length; i += 4)
+        colors.add([...data.slice(i, i + 4)].join());
+      return colors.size;
+    });
+    expect(colors).toBeGreaterThan(1);
+    looks.add(await imageOf(page));
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+  expect(looks.size).toBe(5);
+  await page.locator("#redo").click();
+  await expect.poll(() => imageOf(page)).not.toBe(blank);
+  await page.getByRole("button", { name: "Uszy", exact: true }).click();
+  await page.getByRole("button", { name: "Misiowe", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tygrysie paski", exact: true })
+    .click();
+  await dragPreview(page, { x: 250, y: 280 }, { x: 650, y: 600 });
+  const preview = await imageOf(page);
+  await page.mouse.up();
+  expect(await imageOf(page)).toBe(preview);
+  await page
+    .getByRole("button", { name: "Ukryj: Warstwa 2", exact: true })
+    .click();
+  expect(await imageOf(page)).toBe(blank);
+  await page
+    .getByRole("button", { name: "Pokaż: Warstwa 2", exact: true })
+    .click();
+  const final = await imageOf(page);
+  for (const format of ["png", "webp"]) {
+    const file = await getDownload(page, `[data-export="${format}"]`);
+    const bytes = await readFile(await file.path());
+    const exported = await page.evaluate(
+      async ({ base64, format }) => {
+        const image = new Image();
+        image.src = `data:image/${format};base64,${base64}`;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = 960;
+        canvas.height = 640;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0);
+        return {
+          image: canvas.toDataURL(),
+          alpha: ctx.getImageData(0, 0, 1, 1).data[3],
+          mark: ctx.getImageData(300, 200, 1, 1).data[3],
+        };
+      },
+      { base64: bytes.toString("base64"), format },
+    );
+    expect(exported.alpha).toBe(0);
+    expect(exported.mark).toBe(255);
+    if (format === "png") expect(exported.image).toBe(final);
+  }
+  const file = await getDownload(page, "#save-project");
+  await page.getByRole("button", { name: "Nowy", exact: true }).click();
+  await page.locator("#file-input").setInputFiles(await file.path());
+  await expect.poll(() => imageOf(page)).toBe(final);
+  await expect(page.locator(".layer-row")).toHaveCount(2);
+  await page.getByRole("button", { name: "Czerwony", exact: true }).click();
+  await page.getByRole("button", { name: "Pędzel", exact: true }).click();
+  await stroke(page, { x: 100, y: 100 }, { x: 700, y: 100 });
+  expect(await pixels(page, 300, 100)).toEqual([239, 99, 99, 255]);
+});
+
+test("dotyk rozciąga dodatek na telefonie, a przybornik mieści odmiany i wzory", async ({
+  browser,
+}) => {
+  const mobile = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await mobile.newPage();
+  await page.goto("/");
+  await page.getByRole("button", { name: "Uszy", exact: true }).click();
+  await page.getByRole("button", { name: "Królicze", exact: true }).click();
+  const blank = await imageOf(page);
+  const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const client = await page.context().newCDPSession(page);
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: box.x + box.width * 0.2, y: box.y + box.height * 0.2 }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: box.x + box.width * 0.7, y: box.y + box.height * 0.8 }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  expect(await imageOf(page)).not.toBe(blank);
+  expect((await paintedBounds(page)).width).toBeGreaterThan(300);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(blank);
+  await mobile.close();
+});
+
+test("przybornik mieści do czterech kolumn i nie rozpycha ekranu z otwartymi odmianami", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Oczy", exact: true }).click();
+  for (const width of [320, 390, 620, 768, 900, 1024, 1100, 1280, 1440, 1600]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const columns = await page
+      .locator(".tool-grid")
+      .first()
+      .evaluate(
+        (grid) => getComputedStyle(grid).gridTemplateColumns.split(" ").length,
+      );
+    expect(columns).toBeGreaterThanOrEqual(2);
+    expect(columns).toBeLessThanOrEqual(4);
+    if (width >= 1400) expect(columns).toBe(4);
+    if (width === 1280) expect(columns).toBe(3);
+  }
+});
+
+test("tęczowe dodatki mają wiele kolorów także po obrocie i kliknięciu", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Uszy", exact: true }).click();
+  await page.getByRole("button", { name: "Misiowe", exact: true }).click();
+  await page.getByRole("button", { name: "Tęczowy", exact: true }).click();
+  const blank = await imageOf(page);
+  for (const rotation of [0, 45]) {
+    await setRange(page, "#stamp-rotation", rotation);
+    await stroke(page, { x: 200, y: 200 }, { x: 600, y: 500 });
+    const hues = await page.locator("#drawing").evaluate((canvas) => {
+      const data = canvas
+        .getContext("2d")
+        .getImageData(180, 100, 500, 500).data;
+      let green = 0,
+        blue = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 1] > data[i] + 60 && data[i + 1] > data[i + 2] + 60)
+          green++;
+        if (data[i + 2] > data[i] + 60 && data[i + 2] > data[i + 1] + 60)
+          blue++;
+      }
+      return { green, blue };
+    });
+    expect(hues.green).toBeGreaterThan(100);
+    expect(hues.blue).toBeGreaterThan(100);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+  await setRange(page, "#stamp-rotation", 0);
+  const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  expect(await pixels(page, 440, 320)).not.toEqual(
+    await pixels(page, 470, 320),
+  );
+});
+
+async function clickPoint(page, x, y, pointerType = "mouse") {
+  const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const event = {
+    pointerId: 5,
+    pointerType,
+    button: 0,
+    clientX: box.x + (x * box.width) / 960,
+    clientY: box.y + (y * box.height) / 640,
+  };
+  await canvas.dispatchEvent("pointerdown", event);
+  await canvas.dispatchEvent("pointerup", event);
+}
+
+test("wiaderko wypełnia wnętrze obrysu, cofa się i nie zmienia innych warstw", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Prostokąt", exact: true }).click();
+  await stroke(page, { x: 100, y: 100 }, { x: 500, y: 400 });
+  const outline = await imageOf(page);
+  await page.getByRole("button", { name: "Wypełnij", exact: true }).click();
+  await page.getByRole("button", { name: "Czerwony", exact: true }).click();
+  await clickPoint(page, 300, 200);
+  expect(await pixels(page, 300, 200)).toEqual([239, 99, 99, 255]);
+  expect(await pixels(page, 50, 200)).toEqual([255, 255, 255, 255]);
+  expect(await pixels(page, 100, 200)).toEqual([118, 85, 206, 255]);
+  const filled = await imageOf(page);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(outline);
+  await page.locator("#redo").click();
+  await expect.poll(() => imageOf(page)).toBe(filled);
+  await page.locator("#add-layer").click();
+  await page.getByRole("button", { name: "Niebieski", exact: true }).click();
+  await clickPoint(page, 300, 200, "pen");
+  expect(await pixels(page, 50, 200)).toEqual([105, 169, 232, 255]);
+  await page
+    .getByRole("button", { name: "Ukryj: Warstwa 2", exact: true })
+    .click();
+  expect(await imageOf(page)).toBe(filled);
+  await clickPoint(page, 300, 200);
+  expect(await imageOf(page)).toBe(filled);
+});
+
+test("wiaderko obsługuje przezroczystość, wzory, tęczę i dotyk bez zbędnych kroków historii", async ({
+  page,
+}) => {
+  await page
+    .getByRole("button", { name: "Przezroczyste", exact: true })
+    .click();
+  const blank = await imageOf(page);
+  await page.getByRole("button", { name: "Wypełnij", exact: true }).click();
+  await clickPoint(page, 0, 0, "touch");
+  expect(await pixels(page, 959, 639)).toEqual([118, 85, 206, 255]);
+  await clickPoint(page, 100, 100);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(blank);
+  for (const color of ["Zebra", "Tęczowy"]) {
+    await page.getByRole("button", { name: color, exact: true }).click();
+    await clickPoint(page, 200, 200);
+    const count = await page.locator("#drawing").evaluate((canvas) => {
+      const data = canvas.getContext("2d").getImageData(0, 0, 100, 100).data;
+      const colors = new Set();
+      for (let i = 0; i < data.length; i += 4)
+        colors.add([...data.slice(i, i + 4)].join());
+      return colors.size;
+    });
+    expect(count).toBeGreaterThan(1);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+});
+
+for (const [name, id] of [
+  ["Sawanna", "savanna"],
+  ["Las", "forest"],
+  ["Łąka", "meadow"],
+  ["Ocean", "ocean"],
+  ["Rafa koralowa", "reef"],
+  ["Miasto", "city"],
+  ["Dżungla", "jungle"],
+  ["Arktyczny krajobraz", "arctic"],
+]) {
+  test(`krajobraz ${name}: cofanie, warstwy, JSON, PNG i WebP`, async ({
+    page,
+  }) => {
+    const before = await imageOf(page);
+    const choice = page.getByRole("button", { name, exact: true });
+    await choice.click();
+    await expect(choice).toHaveAttribute("aria-pressed", "true");
+    const landscape = await imageOf(page);
+    expect(landscape).not.toBe(before);
+    const sky = await pixels(page, 0, 0);
+    expect(await pixels(page, 100, 600)).not.toEqual(sky);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(before);
+    await page.locator("#redo").click();
+    await expect.poll(() => imageOf(page)).toBe(landscape);
+    await page.getByRole("button", { name: "Prostokąt", exact: true }).click();
+    await stroke(page, { x: 200, y: 200 }, { x: 500, y: 400 });
+    await page.getByRole("button", { name: "Wypełnij", exact: true }).click();
+    await clickPoint(page, 300, 300);
+    const final = await imageOf(page);
+    const file = await getDownload(page, "#save-project");
+    const data = JSON.parse(await readFile(await file.path(), "utf8"));
+    expect(data.background).toBe(id);
+    await page.locator("#new").click();
+    await page.locator("#file-input").setInputFiles(await file.path());
+    await expect.poll(() => imageOf(page)).toBe(final);
+    for (const format of ["png", "webp"]) {
+      const exported = await getDownload(page, `[data-export="${format}"]`);
+      const bytes = await readFile(await exported.path());
+      const result = await page.evaluate(
+        async ({ base64, format }) => {
+          const image = new Image();
+          image.src = `data:image/${format};base64,${base64}`;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = 960;
+          canvas.height = 640;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(image, 0, 0);
+          return {
+            image: canvas.toDataURL(),
+            sky: [...ctx.getImageData(0, 0, 1, 1).data],
+          };
+        },
+        { base64: bytes.toString("base64"), format },
+      );
+      if (format === "png") expect(result.image).toBe(final);
+      expect(result.sky[3]).toBe(255);
+      for (let channel = 0; channel < 3; channel++) {
+        expect(
+          Math.abs(result.sky[channel] - sky[channel]),
+        ).toBeLessThanOrEqual(5);
+      }
+    }
+  });
+}
+
+test("oba panele mieszczą się w oknie bez przewijania całej strony na komputerze", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Oczy", exact: true }).click();
+  await expect(page.locator("#stamp-size")).toHaveCount(0);
+  for (let i = 0; i < 5; i++) await page.locator("#add-layer").click();
+  for (const [width, height] of [
+    [1024, 600],
+    [1280, 720],
+    [1440, 900],
+    [1600, 600],
+    [1920, 1080],
+    [2560, 1440],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const layout = await page.evaluate(() => {
+      const canvas = document.querySelector("#drawing").getBoundingClientRect();
+      return {
+        width: document.documentElement.scrollWidth,
+        height: document.documentElement.scrollHeight,
+        ratio: canvas.width / canvas.height,
+        panels: [".tools-panel", ".details-panel"].map((selector) => {
+          const el = document.querySelector(selector);
+          const box = el.getBoundingClientRect();
+          return {
+            width: box.width,
+            top: box.top,
+            bottom: box.bottom,
+            scrolls: el.scrollHeight > el.clientHeight,
+          };
+        }),
+      };
+    });
+    expect(layout.width).toBe(width);
+    expect(layout.height).toBe(height);
+    expect(layout.ratio).toBeCloseTo(1.5, 2);
+    if (width >= 1400) {
+      expect(layout.panels[0].width).toBeGreaterThanOrEqual(400);
+      expect(layout.panels[1].width).toBeGreaterThanOrEqual(340);
+    }
+    for (const panel of layout.panels) {
+      expect(panel.top).toBeGreaterThan(0);
+      expect(panel.bottom).toBeLessThan(height);
+      if (height <= 900) expect(panel.scrolls).toBe(true);
+    }
+    await page
+      .getByRole("button", { name: "Arktyczny krajobraz", exact: true })
+      .click();
+    await page.locator("#add-layer").click();
+  }
 });

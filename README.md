@@ -23,16 +23,18 @@ Katalog `dist/` można opublikować na hostingu statycznym. Aplikacja nie potrze
 ## Co już potrafimy?
 
 - Rysować pędzlem, cienkim ołówkiem i sprayem; wymazywać gumką.
+- Wypełniać wiaderkiem zamknięte obszary aktywnej warstwy kolorem, tęczą lub wzorem.
 - Wybierać kolor z palety lub ustawić własny, zmieniać wielkość narzędzia.
 - Rysować tęczą: kolor zmienia się w czasie prowadzenia kreski.
-- Dodawać stempelki: oczy, ogon, uszy i łapy; wybierać ich kolor, wielkość i obrót.
+- Rysować oczy, ogony, uszy i łapy przez przeciąganie, z podglądem wielkości; wybierać po cztery odmiany każdego dodatku i jego obrót.
+- Malować tygrysimi paskami, kocimi cętkami, wzorem żyrafy, zebry i futerka.
 - Sypać kolorowy piasek, który spada i usypuje się na kreskach tej samej warstwy.
 - Pracować w różowej pracowni z delikatnymi gwiazdkami, słoneczkami i serduszkami.
 - Włączyć żartobliwy tryb ciemny: pracownię zastępuje kotek śpiący w łóżku. Tryb jasny przywraca rysunek i historię cofania.
 - Rysować linie, koła/elipsy i prostokąty przez przeciągnięcie.
 - Dodawać tekst: wpisać napis, wybrać czcionkę i wielkość, kliknąć na kartce.
 - Dodawać, ukrywać, przestawiać i usuwać warstwy (maksymalnie 12). Górna warstwa na liście znajduje się na wierzchu rysunku.
-- Wybierać jedno z pięciu jednolitych teł lub przezroczystość.
+- Wybierać jednolite tło, przezroczystość lub jasny pastelowy krajobraz: sawannę, las, łąkę, ocean, rafę koralową, miasto, dżunglę i arktyczny krajobraz.
 - Cofać i ponawiać zmiany: do 25 kroków, z dodatkowym limitem pamięci historii.
 - Zapisywać i otwierać projekt `.ala.json`, pobierać obrazek PNG lub WebP.
 - Rysować myszą, palcem i rysikiem. Wielkość kreski ustawiamy suwakiem; nacisk rysika nie zmienia grubości.
@@ -43,15 +45,25 @@ Czcionki korzystają z lokalnych fontów systemowych (Trebuchet MS, Comic Sans M
 
 ## Zwierzątka, tęcza i piasek
 
-W sekcji **Zwierzątka Ali** wybierz **Oczy**, **Ogon**, **Uszy** lub **Łapy**. Ustaw wielkość i obrót, wybierz kolor i kliknij na kartce. Każde kliknięcie dodaje jeden stempelek na zaznaczonej warstwie. Można go cofnąć albo wymazać; po przybiciu staje się częścią obrazu, tak jak kreska. Na komputerze przybornik można przewijać niezależnie od kartki.
+W sekcji **Zwierzątka Ali** wybierz **Oczy**, **Ogon**, **Uszy** lub **Łapy**, a potem odmianę z obrazkiem. Naciśnij i przeciągnij po kartce, tak jak przy rysowaniu koła — dodatek rośnie razem z ruchem dłoni. Możesz przeciągać w każdą stronę; puszczenie kończy rysowanie. Obrót ustawisz suwakiem. Samo kliknięcie przybija stempelek o stałej wielkości 100 pikseli. Cały dodatek cofniesz jednym kliknięciem. Przerwanie gestu przez przeglądarkę usuwa jego podgląd.
 
-Przycisk **Tęczowy** w palecie włącza zmieniające się kolory pędzla, ołówka, sprayu i sypanego piasku. Kształty oraz tekst dostają tęczowe przejście kolorów, a kolejne stempelki otrzymują kolejne kolory tęczy. Kliknięcie zwykłego koloru wyłącza tęczę. Gumka nadal wymazuje.
+Do wyboru są oczy okrągłe, kocie, z rzęsami i śpiące; ogony zakręcone, lisie, wiewiórcze i królicze; uszy kocie, królicze, misiowe i pieska; łapy kocie, pieska, ptasie oraz kopytka. Wybór odmiany jest pamiętany przy przełączaniu narzędzi. Dodatki trafiają na aktywną warstwę i stają się pikselami, jak kreska. Przybornik dopasowuje się do dostępnego miejsca: od dwóch do czterech narzędzi w wierszu. Na komputerze oba boczne panele przewijają się niezależnie od kartki, a pracownia mieści się w wysokości okna. Na telefonie sekcje układają się jedna pod drugą.
+
+Przycisk **Tęczowy** w palecie włącza zmieniające się kolory pędzla, ołówka, sprayu i sypanego piasku. Kształty oraz tekst dostają tęczowe przejście kolorów, podobnie jak zwierzęce dodatki. Kliknięcie zwykłego koloru wyłącza tęczę. Gumka nadal wymazuje.
+
+W sekcji **Zwierzęce wzory** wybierz **Tygrysie paski**, **Kocie cętki**, **Żyrafę**, **Zebrę** lub **Futerko**. Wzór zastępuje kolor pędzla, ołówka, sprayu, kształtów, napisów i kolorowych części zwierzątek; działa też z piaskiem. Najłatwiej zobaczysz go przy większej grubości kreski. Wybór zwykłego lub własnego koloru wyłącza wzór, a gumka wciąż wymazuje. Wzory zapisują się razem z warstwami w JSON oraz w płaskim eksporcie PNG i WebP.
 
 Wybierz **Piasek**, kolor oraz wielkość strumienia, a następnie przytrzymaj mysz, palec lub rysik nad kartką. Ziarenka przyspieszają w dół, zsuwają się na boki i tworzą kupkę. Zatrzymują się na dnie kartki oraz na dowolnych nieprzezroczystych pikselach **tej samej warstwy**, również białych i częściowo przezroczystych. Tło kartki i pozostałe warstwy nie zatrzymują piasku.
 
 Po puszczeniu przycisku pozostałe ziarenka opadają. Jeśli wcześniej wybierzesz inną czynność (np. zapis, zmianę warstwy albo tryb ciemny), piasek od razu osiądzie. Całe jedno sypanie cofniesz jednym kliknięciem. Osiadły piasek staje się zwykłym rysunkiem: zachowuje się w JSON, PNG i WebP, ale po wymazaniu podpory nie zaczyna ponownie spadać.
 
 **Tryb ciemny** to przerwa na sen: rysunek i przyciski znikają, a skróty pracowni są wyłączone. Przycisk **Tryb jasny — wracamy do rysowania** przywraca pracę. Dekoracje i śpiący kotek nie trafiają do eksportowanego obrazka.
+
+## Wiaderko i krajobrazy
+
+Wybierz **Wypełnij**, kolor i kliknij wewnątrz zamkniętego kształtu. Wiaderko zmienia połączony obszar podobnych pikseli tylko na aktywnej warstwie. Obrysy z innych warstw i tapeta nie zatrzymują wypełnienia. Pusta warstwa wypełni się w całości. Możesz użyć też tęczy lub zwierzęcego wzoru; jedno wypełnienie cofniesz jednym kliknięciem.
+
+W sekcji **Tło kartki** znajdziesz pastelowe tła **Sawanna**, **Las**, **Łąka**, **Ocean**, **Rafa koralowa**, **Miasto**, **Dżungla** i **Arktyczny krajobraz**. Pozostają pod wszystkimi warstwami, więc zmiana tła nie usuwa rysunku. Tło można cofnąć, zachować w projekcie JSON i wyeksportować z obrazkiem PNG lub WebP.
 
 ## Jak zachować rysunek?
 
@@ -69,8 +81,12 @@ Prosty JavaScript w modułach ES, HTML i CSS; Canvas 2D obsługuje rysowanie. [V
 
 - `src/main.js` — interfejs i obsługa przycisków, historii oraz gestów.
 - `src/drawing.js` — kreski, spray i kształty.
+- `src/fill.js` — wypełnianie połączonych obszarów na aktywnej warstwie.
+- `src/backgrounds.js` — kolory tła, wybór krajobrazów i ich miniatury.
+- `src/landscapes.js` — rysowanie oceanu, rafy, miasta, dżungli i Arktyki.
 - `src/colors.js` — zmieniające się kolory tęczy i tęczowe przejścia.
-- `src/stamps.js` — rysowanie części zwierzątek.
+- `src/stamps.js` — odmiany części zwierzątek, ich rysowanie i rozciąganie.
+- `src/patterns.js` — lokalnie rysowane kafelki zwierzęcych wzorów.
 - `src/sand.js` — opadanie ziarenek i przeszkody na aktywnej warstwie.
 - `public/decorations.svg`, `public/sleeping-cat.svg` — lokalne dekoracje i śpiąca maskotka.
 - `src/project.js` — warstwy, format projektu, sprawdzanie plików i eksport.
@@ -90,8 +106,10 @@ npm run build
 npm run format:check
 ```
 
-Testy obejmują rysowanie, cofanie, warstwy, gumkę, tekst, kształty, zapis i odczyt JSON, formaty eksportu, błędny import oraz dotyk na małym ekranie. Sprawdzają też stempelki, zmianę kolorów w tęczowej kresce, opadanie piasku, przeszkody tylko na tej samej warstwie, zapis ziarenek, przerwanie sypania oraz bezpieczny powrót z trybu snu. Są wykonywane w Chromium; pozostałe przeglądarki wymagają osobnej weryfikacji.
+Testy obejmują rysowanie, cofanie, warstwy, gumkę, tekst, kształty, zapis i odczyt JSON, formaty eksportu, błędny import oraz dotyk na małym ekranie. Sprawdzają też stempelki, zmianę kolorów w tęczowej kresce, opadanie piasku, przeszkody tylko na tej samej warstwie, zapis ziarenek, przerwanie sypania oraz bezpieczny powrót z trybu snu. Nowe testy obejmują wszystkie odmiany dodatków, rozciąganie w obie strony, brak śladów podglądu, anulowanie gestu, przeciąganie dotykiem, wzory i tęczowe dodatki oraz układ z otwartymi odmianami przy szerokościach 320–1600 px. Są wykonywane w Chromium; pozostałe przeglądarki wymagają osobnej weryfikacji.
 
 ## Kolejne przygody
 
-W kolejnych etapach możemy dodać więcej części zwierzątek i minek, ilustrowane tła kartki, zmianę rozmiaru kartki oraz automatyczny zapis.
+W kolejnych etapach możemy dodać więcej części zwierzątek i minek, kolejne krajobrazy, zmianę rozmiaru kartki oraz automatyczny zapis.
+
+Stworzone przez Alę z małą pomocą Taty. [AlaPaint na GitHubie](https://github.com/alicjachaba/ala-paint).
