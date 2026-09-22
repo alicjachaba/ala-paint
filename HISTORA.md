@@ -2,6 +2,14 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-22 — Niższa kartka bez zmiany szerokości
+
+- Wysokość nowej kartki na komputerze wynika z miejsca pozostałego po nagłówku, pasku nad rysunkiem, podpisach i stopce. Usunęliśmy minimum oparte na wysokości przybornika. Szerokość kartki pozostaje bez zmian.
+- Panele mają miejsce nad stopką i nadal przewijają swoją zawartość niezależnie. Istniejących projektów nie przycinamy ani nie rozciągamy; wysoki otwarty rysunek może nadal wymagać przewijania strony.
+- Dodaliśmy sprawdzenie braku przewijania strony dla nowych kartek, widoczności stopki oraz położenia dolnych krawędzi kartki i paneli, także przy proporcjach przesłanego zrzutu. Uzupełniliśmy README.
+
+Sprawdzenie: `npm test -- --workers=2` — 42 testy Chromium poprawne; testy rozmiaru w WebKit — 7 poprawnych; `npm run build` i formatowanie zmienionych plików — poprawne. Dodatkowo obejrzeliśmy zrzut WebKit przy oknie 1882 × 1004 i gęstości 2: cała kartka i stopka mieszczą się w oknie bez pionowego przewijania strony.
+
 ## 2026-09-22 — Duża kartka także na Macu, bez liczników
 
 - Podgląd rysunku zajmuje całą szerokość środkowej części pracowni. Usunęliśmy ograniczenie, które pomniejszało go do wysokości kontenera; istniejące projekty zachowują proporcje i piksele, również po zmianie wielkości okna.

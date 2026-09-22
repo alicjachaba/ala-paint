@@ -85,11 +85,11 @@ for (const density of [1, 2]) {
       expectFilledSpace(size);
       expect(Math.abs(size.width - 1408 * 0.6)).toBeLessThan(2);
       expect(size.width).toBeGreaterThan(size.toolsWidth);
-      expect(size.height).toBeGreaterThanOrEqual(size.toolsHeight - 2);
+      expect(size.height).toBeLessThan(size.toolsHeight);
       expect(size.imageWidth).toBe(Math.floor(size.spaceWidth * density));
       expect(size.imageHeight).toBe(Math.floor(size.spaceHeight * density));
       expect(size.pageWidth).toBe(1408);
-      expect(size.pageHeight).toBeGreaterThanOrEqual(650);
+      expect(size.pageHeight).toBe(650);
       await expect(page.locator("#zoom, #dimensions")).toHaveCount(0);
       const blank = await imageOf(page);
       const canvas = page.locator("#drawing");
@@ -211,6 +211,9 @@ test("nowe kartki mają proporcje miejsca na telefonie, laptopie i dużym ekrani
     [1024, 600],
     [1408, 560],
     [1600, 700],
+    [1440, 900],
+    [1882, 1004],
+    [1920, 1080],
     [2256, 1000],
     [2560, 1440],
   ]) {
@@ -225,7 +228,27 @@ test("nowe kartki mają proporcje miejsca na telefonie, laptopie i dużym ekrani
       // Sprawdzamy rozmiar względem okna, nie tylko wypełnienie kontenera.
       expect(Math.abs(size.width - width * fraction)).toBeLessThan(2);
       expect(size.width).toBeGreaterThan(size.toolsWidth);
-      expect(size.height).toBeGreaterThanOrEqual(size.toolsHeight - 2);
+      expect(size.height).toBeLessThan(size.toolsHeight);
+      expect(size.pageHeight).toBe(height);
+      const edges = await page.evaluate(() => {
+        const footer = document.querySelector("footer").getBoundingClientRect();
+        return {
+          footerBottom: footer.bottom,
+          panelsBottom: Math.max(
+            ...[".tools-panel", ".details-panel"].map(
+              (selector) =>
+                document.querySelector(selector).getBoundingClientRect().bottom,
+            ),
+          ),
+          footerTop: footer.top,
+          paperBottom: document
+            .querySelector("#drawing")
+            .getBoundingClientRect().bottom,
+        };
+      });
+      expect(edges.footerBottom).toBeLessThanOrEqual(height);
+      expect(edges.panelsBottom).toBeLessThanOrEqual(edges.footerTop);
+      expect(edges.paperBottom).toBeLessThan(edges.footerTop);
     }
   }
 });

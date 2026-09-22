@@ -58,7 +58,7 @@ Lokalne `npm run build` nadal używa względnych ścieżek (`base: "./"`). Ten s
 - Zapisywać i otwierać projekt `.ala.json`, pobierać obrazek PNG lub WebP.
 - Rysować myszą, palcem i rysikiem. Wielkość kreski ustawiamy suwakiem; nacisk rysika nie zmienia grubości.
 
-**Kartka wykorzystuje całą szerokość środkowej części pracowni.** Nowa kartka na komputerze ma co najmniej wysokość bocznego przybornika. Na telefonie i tablecie jej początkowa wysokość wynosi 60% wysokości okna. Na ekranie Retina rysunek dostaje więcej pikseli przy tej samej wielkości widocznej kartki i pędzla, z limitem pamięci na wszystkie 12 warstw. Podgląd istniejącego projektu zachowuje proporcje i pełną szerokość; w razie potrzeby przewijamy stronę.
+**Kartka wykorzystuje całą szerokość środkowej części pracowni.** Wysokość nowej kartki na komputerze wypełnia miejsce pozostałe po nagłówku, pasku narzędzi, podpisach i stopce. Dzięki temu pracownia mieści się w oknie, a boczne panele przewijają się niezależnie. Na telefonie i tablecie jej początkowa wysokość wynosi 60% wysokości okna. Na ekranie Retina rysunek dostaje więcej pikseli przy tej samej wielkości widocznej kartki i pędzla, z limitem pamięci na wszystkie 12 warstw. Podgląd istniejącego projektu zachowuje proporcje i pełną szerokość; w razie potrzeby przewijamy stronę.
 
 Rozmiar projektu ustalamy przy otwarciu pracowni i po wybraniu **Nowy**. Późniejsza zmiana wielkości okna dopasowuje tylko podgląd: zachowuje proporcje, piksele i warstwy istniejącego rysunku. Nową kartkę dopasowaną do innego okna utworzysz przyciskiem **Nowy**, po zapisaniu poprzedniej pracy. Pod kartką nie wyświetlamy rozdzielczości ani procentu powiększenia.
 

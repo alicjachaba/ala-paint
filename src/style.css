@@ -1816,6 +1816,10 @@ footer {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
   }
+  /* Tylko podczas pomiaru nowej kartki ograniczamy układ do wysokości okna. */
+  #app:not(:has(.has-project)) {
+    height: 100dvh;
+  }
   .workspace {
     width: 100%;
     max-width: none;
@@ -1835,7 +1839,7 @@ footer {
     position: sticky;
     top: 1rem;
     min-height: 0;
-    max-height: calc(100dvh - 12rem);
+    max-height: calc(100dvh - 14rem);
     overflow-y: auto;
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
@@ -1848,16 +1852,23 @@ footer {
     flex-shrink: 0;
   }
   .drawing-area {
+    height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
+  }
+  .drawing-area:has(.has-project) {
+    height: auto;
+  }
+  .canvas-surround:has(.has-project) {
+    flex: none;
   }
   .drawing-toolbar {
     flex-shrink: 0;
     margin-bottom: 16px;
   }
   .canvas-surround {
-    flex: none;
+    flex: 1;
     padding: 1rem 1rem 0;
     min-height: 0;
     display: flex;
@@ -1874,11 +1885,13 @@ footer {
     padding: 6px 0;
   }
   .paper-space {
-    flex: none;
+    /* Nowa kartka dostaje wysokość pozostałą po nagłówku, podpisach i stopce. */
+    flex: 1;
     width: var(--paper-width);
-    height: max(60dvh, calc(100dvh - 12rem));
+    height: auto;
   }
   .paper-space.has-project {
+    flex: none;
     height: auto;
   }
   .encouragement {
