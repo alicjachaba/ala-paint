@@ -168,6 +168,7 @@ app.innerHTML = `
       <button id="open" class="button subtle">${icon("folder-open")}<span>Otwórz</span></button>
       <div class="save-wrap"><button id="save-menu-toggle" class="button primary" aria-expanded="false" aria-controls="save-menu">${icon("download")}<span>Zapisz rysunek</span>${icon("chevron-down")}</button>
         <div id="save-menu" class="save-menu" hidden>
+          <div class="project-details"><label for="project-name">Nazwa rysunku</label><input id="project-name" maxlength="80" value="Mój pierwszy rysunek"><span id="save-status" role="status"></span></div>
           <button id="save-project">${icon("file-json")}<span>Zapisz projekt<small>JSON · wróć do rysowania później</small></span></button>
           <button data-export="png">${icon("image-down")}<span>Pobierz PNG<small>Obrazek w pełnej jakości</small></span></button>
           <button data-export="webp">${icon("image-down")}<span>Pobierz WebP<small>Lekki obrazek do dzielenia się</small></span></button>
@@ -205,10 +206,7 @@ app.innerHTML = `
       <div class="tool-tip"><span>✦</span><p>Każda wielka przygoda<br>zaczyna się od kreski.</p></div>
     </aside>
     <section class="drawing-area" aria-label="Twoja pracownia">
-      <div class="drawing-toolbar"><div class="drawing-title"><label class="sr-only" for="project-name">Nazwa rysunku</label><input id="project-name" maxlength="80" value="Mój pierwszy rysunek"><span id="save-status"><span class="status-dot"></span> Gotowy na twoje pomysły</span></div>
-        <div class="history-actions"><button id="undo" class="icon-button" title="Cofnij (Ctrl / ⌘ + Z)" aria-label="Cofnij" disabled>${icon("undo-2")}</button><button id="redo" class="icon-button" title="Ponów (Ctrl / ⌘ + Shift + Z)" aria-label="Ponów" disabled>${icon("redo-2")}</button></div>
-      </div>
-      <div class="canvas-surround"><div class="paper-label">TWOJA WYOBRAŹNIA MA TU MIEJSCE <span>✧</span></div><div class="paper-space"><div class="paper"><canvas id="drawing" aria-label="Kartka do rysowania. Rysuj myszą, palcem lub rysikiem."></canvas></div></div><div class="canvas-bottom"><span class="drawing-hint">${icon("mouse-pointer-2")}<span id="canvas-hint">Wybierz kolor i narysuj coś swojego</span></span></div></div>
+      <div class="canvas-surround"><div class="paper-label">TWOJA WYOBRAŹNIA MA TU MIEJSCE <span>✧</span></div><div class="paper-space"><div class="paper"><canvas id="drawing" aria-label="Kartka do rysowania. Rysuj myszą, palcem lub rysikiem."></canvas></div></div><div class="canvas-bottom"><div class="history-actions"><button id="undo" class="button subtle" title="Cofnij (Ctrl / ⌘ + Z)" disabled>${icon("undo-2")}<span>Cofnij</span></button><button id="redo" class="button subtle" title="Ponów (Ctrl / ⌘ + Shift + Z)" disabled>${icon("redo-2")}<span>Ponów</span></button></div><span class="drawing-hint">${icon("mouse-pointer-2")}<span id="canvas-hint">Wybierz kolor i narysuj coś swojego</span></span></div></div>
       <div class="encouragement"><span class="encouragement-icon">✳</span><p>Tu nie ma złych kresek.<br><strong>Są tylko nowe pomysły!</strong></p><span class="doodle">✧</span></div>
     </section>
     <aside class="details-panel" aria-label="Warstwy i tło">
@@ -413,7 +411,6 @@ function renderAll() {
   if (canvas.width !== project.width) canvas.width = project.width;
   if (canvas.height !== project.height) canvas.height = project.height;
   $("#project-name").value = project.name;
-  $(".paper-space").classList.add("has-project");
   document.querySelectorAll("[data-background]").forEach((button) => {
     const selected = button.dataset.background === project.background;
     button.setAttribute("aria-pressed", selected);

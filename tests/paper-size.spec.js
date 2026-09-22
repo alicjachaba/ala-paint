@@ -31,6 +31,21 @@ function expectFilledSpace(size) {
   expect(Math.abs(size.height - size.spaceHeight)).toBeLessThan(2);
 }
 
+function expectFittedSpace(size) {
+  expect(size.width).toBeLessThanOrEqual(size.spaceWidth + 1);
+  expect(size.height).toBeLessThanOrEqual(size.spaceHeight + 1);
+  expect(
+    Math.min(
+      Math.abs(size.width - size.spaceWidth),
+      Math.abs(size.height - size.spaceHeight),
+    ),
+  ).toBeLessThan(2);
+  expect(size.width / size.height).toBeCloseTo(
+    size.imageWidth / size.imageHeight,
+    2,
+  );
+}
+
 async function imageOf(page) {
   return page.locator("#drawing").evaluate((canvas) => canvas.toDataURL());
 }
@@ -50,7 +65,7 @@ for (const density of [1, 2]) {
       hasTouch: true,
     });
 
-    test("otwarty rysunek zachowuje pełną szerokość także w niskim oknie", async ({
+    test("otwarty rysunek dopasowuje się do wysokości i szerokości okna", async ({
       page,
     }) => {
       await page.goto("/");
@@ -67,13 +82,84 @@ for (const density of [1, 2]) {
       for (const height of [650, 500, 900]) {
         await page.setViewportSize({ width: 1408, height });
         const size = await layout(page);
-        expectFilledSpace(size);
-        expect(Math.abs(size.width - 1408 * 0.6)).toBeLessThan(2);
+        expectFittedSpace(size);
+        expect(size.pageHeight).toBe(height);
         expect(size.width / size.height).toBeCloseTo(1.5, 2);
         expect(size.width).toBeGreaterThan(size.toolsWidth);
         expect([size.imageWidth, size.imageHeight]).toEqual([960, 640]);
         await expect(page.locator("#zoom, #dimensions")).toHaveCount(0);
       }
+    });
+
+    test("zmiana okna zachowuje projekt, historię i trafienie dotykiem przy brzegu", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.locator("#add-layer").click();
+      await page.getByRole("button", { name: "Miętowe", exact: true }).click();
+      const canvas = page.locator("#drawing");
+      const original = await imageOf(page);
+      const saved = JSON.parse(
+        await readFile(await download(page, "#save-project"), "utf8"),
+      );
+      let previousHeight = (await layout(page)).height;
+      for (const [width, height] of [
+        [1408, 500],
+        [1408, 900],
+        [390, 844],
+        [844, 390],
+        [1920, 1080],
+      ]) {
+        await page.setViewportSize({ width, height });
+        const size = await layout(page);
+        expectFittedSpace(size);
+        expect(Math.abs(size.height - previousHeight)).toBeGreaterThan(10);
+        previousHeight = size.height;
+        expect(size.pageWidth).toBe(width);
+        if (width > 900) expect(size.pageHeight).toBe(height);
+        expect([size.imageWidth, size.imageHeight]).toEqual([
+          saved.width,
+          saved.height,
+        ]);
+        expect(await imageOf(page)).toBe(original);
+        await canvas.scrollIntoViewIfNeeded();
+        const box = await canvas.boundingBox();
+        await page.touchscreen.tap(
+          box.x + box.width * 0.92,
+          box.y + box.height * 0.92,
+        );
+        const painted = await imageOf(page);
+        expect(painted).not.toBe(original);
+        expect(
+          await canvas.evaluate((element) => [
+            ...element
+              .getContext("2d")
+              .getImageData(
+                Math.floor(element.width * 0.92),
+                Math.floor(element.height * 0.92),
+                1,
+                1,
+              ).data,
+          ]),
+        ).toEqual([118, 85, 206, 255]);
+        await page.locator("#undo").click();
+        await expect.poll(() => imageOf(page)).toBe(original);
+        await page.locator("#redo").click();
+        await expect.poll(() => imageOf(page)).toBe(painted);
+        await page.locator("#undo").click();
+        await expect.poll(() => imageOf(page)).toBe(original);
+      }
+      // Zmiany okna nie dodają kroków historii: dalej cofamy wybór tła.
+      await page.locator("#undo").click();
+      await expect(
+        page.getByRole("button", { name: "Białe", exact: true }),
+      ).toHaveAttribute("aria-pressed", "true");
+      await page.locator("#redo").click();
+      await expect.poll(() => imageOf(page)).toBe(original);
+      const after = JSON.parse(
+        await readFile(await download(page, "#save-project"), "utf8"),
+      );
+      expect(after).toEqual(saved);
     });
 
     test("wypełnia miejsce, rysuje i zachowuje rozdzielczość w plikach oraz po zmianie okna", async ({
@@ -182,7 +268,7 @@ for (const density of [1, 2]) {
       await page.setViewportSize({ width: 1920, height: 1080 });
       expect(await imageOf(page)).toBe(drawing);
       const resized = await layout(page);
-      expectFilledSpace(resized);
+      expectFittedSpace(resized);
       expect(resized.width).toBeGreaterThan(size.width);
       expect(resized.width / resized.height).toBeCloseTo(
         project.width / project.height,
@@ -241,6 +327,15 @@ test("nowe kartki mają proporcje miejsca na telefonie, laptopie i dużym ekrani
             ),
           ),
           footerTop: footer.top,
+          frameTop: document
+            .querySelector(".canvas-surround")
+            .getBoundingClientRect().top,
+          frameBottom: document
+            .querySelector(".canvas-surround")
+            .getBoundingClientRect().bottom,
+          headerBottom: document
+            .querySelector(".topbar")
+            .getBoundingClientRect().bottom,
           paperBottom: document
             .querySelector("#drawing")
             .getBoundingClientRect().bottom,
@@ -249,6 +344,11 @@ test("nowe kartki mają proporcje miejsca na telefonie, laptopie i dużym ekrani
       expect(edges.footerBottom).toBeLessThanOrEqual(height);
       expect(edges.panelsBottom).toBeLessThanOrEqual(edges.footerTop);
       expect(edges.paperBottom).toBeLessThan(edges.footerTop);
+      // Kartka wykorzystuje odzyskane miejsce nad i pod ramką.
+      expect(edges.frameTop - edges.headerBottom).toBeLessThanOrEqual(10);
+      expect(edges.footerTop - edges.frameBottom).toBeLessThan(12);
+      await expect(page.locator(".canvas-surround #undo")).toHaveText("Cofnij");
+      await expect(page.locator(".canvas-surround #redo")).toHaveText("Ponów");
     }
   }
 });

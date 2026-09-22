@@ -58,9 +58,9 @@ Lokalne `npm run build` nadal używa względnych ścieżek (`base: "./"`). Ten s
 - Zapisywać i otwierać projekt `.ala.json`, pobierać obrazek PNG lub WebP.
 - Rysować myszą, palcem i rysikiem. Wielkość kreski ustawiamy suwakiem; nacisk rysika nie zmienia grubości.
 
-**Kartka wykorzystuje całą szerokość środkowej części pracowni.** Wysokość nowej kartki na komputerze wypełnia miejsce pozostałe po nagłówku, pasku narzędzi, podpisach i stopce. Dzięki temu pracownia mieści się w oknie, a boczne panele przewijają się niezależnie. Na telefonie i tablecie jej początkowa wysokość wynosi 60% wysokości okna. Na ekranie Retina rysunek dostaje więcej pikseli przy tej samej wielkości widocznej kartki i pędzla, z limitem pamięci na wszystkie 12 warstw. Podgląd istniejącego projektu zachowuje proporcje i pełną szerokość; w razie potrzeby przewijamy stronę.
+**Kartka automatycznie dopasowuje podgląd do szerokości i wysokości okna.** Wysokość nowej kartki na komputerze wypełnia miejsce pozostałe po zwartym nagłówku, ramce z przyciskami cofania i stopce. Dzięki temu pracownia mieści się w oknie, a boczne panele przewijają się niezależnie. Na telefonie i tablecie jej początkowa wysokość wynosi 60% wysokości okna. Na ekranie Retina rysunek dostaje więcej pikseli przy tej samej wielkości widocznej kartki i pędzla, z limitem pamięci na wszystkie 12 warstw. Podgląd istniejącego projektu zachowuje proporcje i mieści cały obraz w ramce. Przy niskim oknie zmniejsza się również jego szerokość, aby niczego nie obciąć ani nie rozciągać.
 
-Rozmiar projektu ustalamy przy otwarciu pracowni i po wybraniu **Nowy**. Późniejsza zmiana wielkości okna dopasowuje tylko podgląd: zachowuje proporcje, piksele i warstwy istniejącego rysunku. Nową kartkę dopasowaną do innego okna utworzysz przyciskiem **Nowy**, po zapisaniu poprzedniej pracy. Pod kartką nie wyświetlamy rozdzielczości ani procentu powiększenia.
+Rozmiar projektu ustalamy przy otwarciu pracowni i po wybraniu **Nowy**. Późniejsza zmiana wielkości okna od razu dopasowuje podgląd, także po obróceniu telefonu: zachowuje proporcje, piksele, warstwy i historię cofania istniejącego rysunku. Nową kartkę dopasowaną do innego okna utworzysz przyciskiem **Nowy**, po zapisaniu poprzedniej pracy. Pod kartką nie wyświetlamy rozdzielczości ani procentu powiększenia.
 
 Czcionki korzystają z lokalnych fontów systemowych (Trebuchet MS, Comic Sans MS / Chalkboard SE, Georgia, Arial, Courier New) i zamienników. Ich wygląd może różnić się pomiędzy urządzeniami. Tekst staje się częścią obrazu aktywnej warstwy — można go cofnąć lub wymazać, ale nie edytować jak w edytorze tekstu.
 
@@ -87,6 +87,8 @@ Wybierz **Wypełnij**, kolor i kliknij wewnątrz zamkniętego kształtu. Wiaderk
 W sekcji **Tło kartki** znajdziesz pastelowe tła **Sawanna**, **Las**, **Łąka**, **Ocean**, **Rafa koralowa**, **Miasto**, **Dżungla** i **Arktyczny krajobraz**. Pozostają pod wszystkimi warstwami, więc zmiana tła nie usuwa rysunku. Tło można cofnąć, zachować w projekcie JSON i wyeksportować z obrazkiem PNG lub WebP.
 
 ## Jak zachować rysunek?
+
+Nazwę rysunku możesz zmienić w menu **Zapisz rysunek**. Tam też sprawdzisz, czy masz niezapisane zmiany. Przyciski **Cofnij** i **Ponów** są pod kartką, wewnątrz jej ramki.
 
 1. Kliknij **Zapisz rysunek → Zapisz projekt**. Przeglądarka pobierze plik `.ala.json` z warstwami, tłem i nazwą.
 2. Później wybierz **Otwórz** i wskaż ten plik.

@@ -110,8 +110,10 @@ test("warstwy można ukryć, przesunąć i usunąć; gumka chroni dolną warstw�
 
 test("projekt JSON zachowuje obraz, warstwy, tło i nazwę", async ({ page }) => {
   await stroke(page);
+  await page.locator("#save-menu-toggle").click();
   await page.locator("#project-name").fill("Kosmiczny kot Ali");
   await page.locator("#project-name").press("Tab");
+  await page.locator("#save-menu-toggle").click();
   await page.getByRole("button", { name: "Miętowe", exact: true }).click();
   await page
     .getByRole("button", { name: "Dodaj warstwę", exact: true })
@@ -1015,7 +1017,7 @@ test("panele przewijają się niezależnie, a strona zachowuje szerokość okna"
       };
     });
     expect(layout.width).toBe(width);
-    expect(layout.height).toBeGreaterThanOrEqual(height);
+    expect(layout.height).toBe(height);
     expect(layout.ratio).toBeCloseTo(1.5, 2);
     expect(layout.panels[0].width).toBeGreaterThanOrEqual(192);
     expect(layout.panels[1].width).toBeGreaterThanOrEqual(208);

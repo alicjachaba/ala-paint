@@ -2,6 +2,24 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-22 — Dopasowanie przy zmianie okna
+
+- Podgląd reaguje od razu na zmianę szerokości i wysokości okna oraz obrót telefonu. CSS dopasowuje go proporcjonalnie do obu wymiarów ramki, bez przycinania i rozciągania obrazu. Gdy ogranicza nas wysokość, zmniejsza się także szerokość podglądu.
+- Na komputerze ramka i boczne panele korzystają z wysokości pozostałej między nagłówkiem a stopką. Zawartość paneli nadal przewija się niezależnie.
+- Usunęliśmy przełączanie układu po utworzeniu projektu. Dopasowanie podglądu nie zmienia rozdzielczości, pikseli, warstw, tła ani historii cofania. Nowa kartka nadal otrzymuje rozmiar aktualnie dostępnego miejsca.
+- Uzupełniliśmy README i testy zmniejszania/powiększania okna, przejścia między komputerem a telefonem i obrotu telefonu, także przy gęstości Retina. Sprawdzamy trafienie dotykiem przy brzegu po każdej zmianie, cofanie i ponawianie oraz identyczny zapis JSON przed i po zmianach okna.
+
+Sprawdzenie: `npm test -- --workers=2` — 44 testy Chromium; `npx playwright test tests/paper-size.spec.js --browser=webkit --workers=2` — 9 testów; `npm run build` — poprawne. Formatowanie zmienionych plików i `git diff --check` — poprawne. Obejrzeliśmy zrzut niskiego okna 1408 × 500 i sprawdziliśmy położenie ramki, paneli oraz stopki przy czterech rozmiarach okna.
+
+## 2026-09-22 — Więcej wysokości na rysunek
+
+- Usunęliśmy tytuł projektu i komunikat o zapisie znad kartki. Nazwę i stan zapisu przenieśliśmy do menu **Zapisz rysunek**, zachowując możliwość zmiany nazwy i jej zapis w JSON.
+- Przyciski **Cofnij** i **Ponów** są w dolnej części ramki i mają widoczne podpisy oraz pola dotykowe o wysokości 44 px. Skróty klawiaturowe działają jak dotąd.
+- Zmniejszyliśmy pionowe odstępy nagłówka, pracowni i ramki. Na komputerze schowaliśmy ozdobne hasło pod kartką. Nowa kartka automatycznie wykorzystuje pozostałą wysokość okna, bez zmiany szerokości. Istniejące projekty zachowują proporcje i piksele.
+- Przy oknie 1882 × 1004 wysokość nowej kartki wzrosła z około 603 do 729 px, czyli o 126 px. Uzupełniliśmy README i sprawdzanie położenia ramki względem nagłówka oraz stopki.
+
+Sprawdzenie: `npm test -- --workers=2` — 42 testy Chromium; `npx playwright test tests/paper-size.spec.js --browser=webkit --workers=2` — 7 testów; `npm run build` — poprawne. Sprawdziliśmy formatowanie zmienionych plików oraz obejrzeliśmy zrzuty przy szerokościach 1882 i 390 px. Testy obejmują zapis nazwy z nowego menu, cofanie, rysowanie, warstwy, import/eksport i dopasowanie nowych kartek do różnych okien.
+
 ## 2026-09-22 — Niższa kartka bez zmiany szerokości
 
 - Wysokość nowej kartki na komputerze wynika z miejsca pozostałego po nagłówku, pasku nad rysunkiem, podpisach i stopce. Usunęliśmy minimum oparte na wysokości przybornika. Szerokość kartki pozostaje bez zmian.

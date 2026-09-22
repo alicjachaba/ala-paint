@@ -411,31 +411,25 @@ input[type="range"] {
   min-width: 0;
   padding-top: 5px;
 }
-.drawing-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 0 27px;
-  gap: 12px;
+.project-details {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
 }
-.drawing-title {
-  min-width: 0;
-}
-.drawing-title input {
+.project-details label {
   display: block;
-  max-width: 100%;
-  width: 290px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  margin-left: -5px;
-  padding: 4px;
-  font-size: 19px;
+  margin-bottom: 6px;
+  font-size: 14px;
   font-weight: 700;
-  color: #443a54;
 }
-.drawing-title input:hover {
-  border-color: var(--border);
+.project-details input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: inherit;
+  background: white;
 }
 #save-status {
   display: flex;
@@ -928,9 +922,6 @@ dialog p {
   .canvas-surround {
     padding: 25px 29px 0;
   }
-  .drawing-toolbar {
-    margin-bottom: 29px;
-  }
   .swatch {
     width: 32px;
     height: 32px;
@@ -980,9 +971,6 @@ dialog p {
   .background-choice {
     font-size: 8px;
   }
-  .drawing-title input {
-    font-size: 17px;
-  }
   .paper-label {
     font-size: 7px;
     letter-spacing: 1.2px;
@@ -1007,9 +995,6 @@ dialog p {
   }
   .future-card {
     display: none;
-  }
-  .drawing-toolbar {
-    margin-bottom: 18px;
   }
   .encouragement {
     margin: 19px 0 4px;
@@ -1131,17 +1116,6 @@ dialog p {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     width: 100%;
     gap: 10px;
-  }
-  .drawing-toolbar {
-    margin-bottom: 15px;
-  }
-  .drawing-title input {
-    font-size: 18px;
-    width: 235px;
-  }
-  .history-actions .icon-button {
-    width: 39px;
-    height: 39px;
   }
   .canvas-surround {
     padding: 12px 12px 0;
@@ -1395,13 +1369,6 @@ dialog p {
   .layer-hint {
     font-size: 12px;
   }
-  .drawing-title input {
-    width: 230px;
-  }
-  .history-actions .icon-button {
-    width: 38px;
-    min-width: 38px;
-  }
   .canvas-bottom {
     font-size: 11px;
   }
@@ -1410,10 +1377,6 @@ dialog p {
   }
 }
 @media (max-width: 370px) {
-  .drawing-title input {
-    width: 190px;
-    font-size: 16px;
-  }
   .save-wrap > .button {
     font-size: 11px;
   }
@@ -1798,27 +1761,20 @@ footer {
   min-height: 0;
   display: grid;
   place-items: center;
+  container-type: size;
 }
 .paper {
-  /* Podgląd zawsze wykorzystuje szerokość; wysokość nie pomniejsza rysunku. */
-  width: 100%;
+  /* Dopasowujemy cały podgląd do obu wymiarów miejsca, bez zmiany pikseli projektu. */
+  width: min(100cqw, calc(100cqh * var(--paper-ratio, 1.5)));
   aspect-ratio: var(--paper-ratio, 1.5);
-}
-
-.paper-space.has-project {
-  height: auto;
 }
 
 @media (min-width: 901px) {
   /* Najpierw ustalamy wielkość kartki względem okna, potem miejsce na przyborniki. */
   #app {
-    min-height: 100dvh;
+    height: 100dvh;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-  /* Tylko podczas pomiaru nowej kartki ograniczamy układ do wysokości okna. */
-  #app:not(:has(.has-project)) {
-    height: 100dvh;
   }
   .workspace {
     width: 100%;
@@ -1830,16 +1786,15 @@ footer {
       minmax(0, 1fr);
     gap: 1vw;
     padding-inline: 1vw;
-    padding-top: 18px;
+    padding-top: 10px;
     padding-bottom: 10px;
     align-items: start;
   }
   .tools-panel,
   .details-panel {
-    position: sticky;
-    top: 1rem;
     min-height: 0;
-    max-height: calc(100dvh - 14rem);
+    height: 100%;
+    max-height: 100%;
     overflow-y: auto;
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
@@ -1857,19 +1812,9 @@ footer {
     display: flex;
     flex-direction: column;
   }
-  .drawing-area:has(.has-project) {
-    height: auto;
-  }
-  .canvas-surround:has(.has-project) {
-    flex: none;
-  }
-  .drawing-toolbar {
-    flex-shrink: 0;
-    margin-bottom: 16px;
-  }
   .canvas-surround {
     flex: 1;
-    padding: 1rem 1rem 0;
+    padding: 8px 1rem 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -1890,13 +1835,8 @@ footer {
     width: var(--paper-width);
     height: auto;
   }
-  .paper-space.has-project {
-    flex: none;
-    height: auto;
-  }
   .encouragement {
-    flex-shrink: 0;
-    margin-top: 16px;
+    display: none;
   }
   .canvas-bottom > .drawing-hint {
     display: none;
@@ -1922,4 +1862,33 @@ footer {
   .workspace {
     --paper-width: 50vw;
   }
+}
+
+/* Zwarty nagłówek i sterowanie w ramce zostawiają więcej wysokości na kartkę. */
+.topbar {
+  min-height: 0;
+  padding-block: 8px;
+  gap: 12px;
+}
+.drawing-area {
+  padding-top: 0;
+}
+.paper-label {
+  margin-bottom: 8px;
+}
+.canvas-bottom {
+  padding-block: 6px;
+  flex-wrap: wrap;
+}
+.history-actions {
+  flex-shrink: 0;
+  gap: 6px;
+}
+.history-actions .button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.history-actions svg {
+  width: 19px;
+  height: 19px;
 }
