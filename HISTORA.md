@@ -2,6 +2,14 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-22 — Publikacja w podkatalogu i na GitHub Pages
+
+- Dodaliśmy konfigurację Vite z względną ścieżką bazową (`base: "./"`). Gotowy katalog `dist/` działa pod głównym adresem oraz w podkatalogach, np. `/ala-paint/`, wraz ze skryptami, stylami, ikoną strony i dekoracjami.
+- Obrazek śpiącego kotka korzysta ze ścieżki bazowej Vite, również przy jej nadpisaniu podczas budowania.
+- W README opisaliśmy publikację zawartości `dist/` na GitHub Pages i opcjonalne ustawienie stałej ścieżki bazowej.
+
+Sprawdzenie: `npm test` — 33 testy Chromium, `npm run build` i `npm run format:check` — poprawne. Dodatkowo gotową aplikację z `dist/` uruchomiliśmy na lokalnym serwerze statycznym pod `/`, `/ala-paint/` i `/zagniezdzony/katalog/`. W Chromium sprawdziliśmy ładowanie zasobów bez błędów i bez odwołań poza wybrany podkatalog, rysowanie, cofanie oraz obrazek kotka.
+
 ## 2026-09-22 — Napis we wspólnej stopce
 
 - Przenieśliśmy „Rysunki zostają u ciebie · bez konta, bez pośpiechu” niżej, pod linię oddzielającą stopkę, obok linku do GitHuba i podpisu autorów. Na telefonie elementy stopki układają się pionowo.

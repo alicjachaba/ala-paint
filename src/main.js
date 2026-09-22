@@ -227,7 +227,7 @@ const sleepScreen = document.createElement("section");
 sleepScreen.id = "sleep-screen";
 sleepScreen.hidden = true;
 sleepScreen.setAttribute("aria-labelledby", "sleep-title");
-sleepScreen.innerHTML = `<div class="sleep-card"><p class="sleep-eyebrow">PRACOWNIA ALI · CISZA NOCNA</p><h1 id="sleep-title">Ciii… wyobraźnia śpi.</h1><p class="sleep-zzz">zz.. zzz... zzzz...</p><img src="./sleeping-cat.svg" alt="Kotek śpi w łóżku pod różową kołdrą w gwiazdki." width="600" height="380"><p>Jeszcze tylko pięć minut…<br>Twój rysunek czeka, aż wrócisz.</p><button id="wake" class="button primary">${icon("sun")} Tryb jasny — wracamy do rysowania</button></div>`;
+sleepScreen.innerHTML = `<div class="sleep-card"><p class="sleep-eyebrow">PRACOWNIA ALI · CISZA NOCNA</p><h1 id="sleep-title">Ciii… wyobraźnia śpi.</h1><p class="sleep-zzz">zz.. zzz... zzzz...</p><img src="${import.meta.env.BASE_URL}sleeping-cat.svg" alt="Kotek śpi w łóżku pod różową kołdrą w gwiazdki." width="600" height="380"><p>Jeszcze tylko pięć minut…<br>Twój rysunek czeka, aż wrócisz.</p><button id="wake" class="button primary">${icon("sun")} Tryb jasny — wracamy do rysowania</button></div>`;
 document.body.append(sleepScreen);
 
 const $ = (selector) => document.querySelector(selector);

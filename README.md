@@ -20,6 +20,14 @@ npm run preview  # lokalny podgląd gotowej aplikacji
 
 Katalog `dist/` można opublikować na hostingu statycznym. Aplikacja nie potrzebuje backendu. Serwer Vite służy tylko do pracy nad kodem; pliki produkcyjne nie potrzebują Node.js. Zasoby aplikacji są lokalne, bez zewnętrznych fontów i CDN. Pierwsze otwarcie wymaga dostępu do hostingu; nie ma jeszcze instalacji PWA ani gwarancji uruchamiania offline.
 
+### GitHub Pages i podkatalogi
+
+Konfiguracja Vite używa względnych ścieżek (`base: "./"`). Ten sam wynik `npm run build` działa zarówno pod głównym adresem strony, jak i w podkatalogu, np. `/ala-paint/`, bez zmieniania kodu.
+
+Na GitHub Pages opublikuj **zawartość katalogu `dist/`** jako witrynę repozytorium. Dla repozytorium `alicjachaba/ala-paint` adresem będzie `https://alicjachaba.github.io/ala-paint/`. Używaj adresu podkatalogu zakończonego `/`, aby przeglądarka poprawnie odczytywała względne ścieżki.
+
+Jeśli hosting wymaga stałej ścieżki bazowej, możesz ją podać przy budowaniu: `npm run build -- --base=/ala-paint/`.
+
 ## Co już potrafimy?
 
 - Rysować pędzlem, cienkim ołówkiem i sprayem; wymazywać gumką.
