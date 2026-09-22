@@ -2,6 +2,15 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-22 — GitHub Pages bezpośrednio z main i katalogu głównego
+
+- Aplikacja działa bezpośrednio ze źródeł, bez Vite podczas publikacji. W GitHub Pages wybieramy **Deploy from a branch → main → /(root)**. Dodaliśmy `.nojekyll`; własny workflow i katalog gotowej strony w repozytorium nie są potrzebne.
+- HTML ładuje arkusz CSS zwykłym linkiem, a JavaScript i ikona strony mają względne ścieżki. Obrazki przenieśliśmy z `public/` do `assets/`; style i obrazek kotka odwołują się do ich rzeczywistych lokalizacji. Usunęliśmy użycie `import.meta.env.BASE_URL`.
+- Zachowaliśmy ikony Lucide jako lokalny moduł zawierający tylko używane ikony i obsługę ich wyświetlania. Kopia ma licencję i polecenie `npm run icons:update` do odświeżania przy zmianach biblioteki. Nie dodaliśmy zależności ani CDN.
+- Vite nadal służy do pracy nad kodem i opcjonalnego budowania `dist/`. Gotowa paczka zawiera również licencję Lucide. README opisuje publikację źródeł z `main`.
+
+Sprawdzenie: `npm test` — 35 testów Chromium. Dwa nowe testy serwują wyłącznie źródła pod `/` i `/ala-paint/`, bez Vite, `node_modules` i `dist/`; sprawdzają ikony, dekoracje, rysowanie, cofanie, ponawianie, warstwy, zapis i odczyt JSON, obrazek kotka oraz brak błędów ładowania. `npm run build`, `npm run format:check` i `git diff --check` — poprawne. Ustawień repozytorium na GitHubie nie zmienialiśmy.
+
 ## 2026-09-22 — Publikacja w podkatalogu i na GitHub Pages
 
 - Dodaliśmy konfigurację Vite z względną ścieżką bazową (`base: "./"`). Gotowy katalog `dist/` działa pod głównym adresem oraz w podkatalogach, np. `/ala-paint/`, wraz ze skryptami, stylami, ikoną strony i dekoracjami.

@@ -20,13 +20,24 @@ npm run preview  # lokalny podgląd gotowej aplikacji
 
 Katalog `dist/` można opublikować na hostingu statycznym. Aplikacja nie potrzebuje backendu. Serwer Vite służy tylko do pracy nad kodem; pliki produkcyjne nie potrzebują Node.js. Zasoby aplikacji są lokalne, bez zewnętrznych fontów i CDN. Pierwsze otwarcie wymaga dostępu do hostingu; nie ma jeszcze instalacji PWA ani gwarancji uruchamiania offline.
 
-### GitHub Pages i podkatalogi
+### GitHub Pages — publikacja z main
 
-Konfiguracja Vite używa względnych ścieżek (`base: "./"`). Ten sam wynik `npm run build` działa zarówno pod głównym adresem strony, jak i w podkatalogu, np. `/ala-paint/`, bez zmieniania kodu.
+GitHub Pages może publikować aplikację bezpośrednio z plików źródłowych w gałęzi `main`, pod adresem [alicjachaba.github.io/ala-paint/](https://alicjachaba.github.io/ala-paint/). Przeglądarka sama odczytuje HTML, CSS i moduły JavaScript. Nie potrzeba własnego workflow, lokalnego budowania strony ani katalogu `dist/` w repozytorium.
 
-Na GitHub Pages opublikuj **zawartość katalogu `dist/`** jako witrynę repozytorium. Dla repozytorium `alicjachaba/ala-paint` adresem będzie `https://alicjachaba.github.io/ala-paint/`. Używaj adresu podkatalogu zakończonego `/`, aby przeglądarka poprawnie odczytywała względne ścieżki.
+Jednorazowe przygotowanie repozytorium:
 
-Jeśli hosting wymaga stałej ścieżki bazowej, możesz ją podać przy budowaniu: `npm run build -- --base=/ala-paint/`.
+1. Otwórz [Settings → Pages](https://github.com/alicjachaba/ala-paint/settings/pages).
+2. W **Build and deployment → Source** wybierz **Deploy from a branch**.
+3. Wybierz gałąź **main**, katalog **/(root)** i kliknij **Save**.
+4. Wyślij zmiany projektu do `main`.
+
+Każdy kolejny push do `main` uruchamia zwykłą publikację GitHub Pages. Plik `.nojekyll` oznacza, że GitHub ma udostępnić gotowe źródła bez przetwarzania przez Jekyll. Postęp publikacji można sprawdzić w zakładce **Actions**, w zadaniu tworzonym przez sam GitHub Pages.
+
+Vite pozostaje narzędziem do pracy nad kodem oraz opcjonalnego przygotowania mniejszej paczki `dist/` na inne hostingi. Aplikacja działa również bez uruchamiania Vite.
+
+### Inne hostingi i podkatalogi
+
+Lokalne `npm run build` nadal używa względnych ścieżek (`base: "./"`). Ten sam wynik działa pod głównym adresem strony i w dowolnym podkatalogu. Używaj adresu podkatalogu zakończonego `/`, aby przeglądarka poprawnie odczytywała względne ścieżki. Stałą ścieżkę bazową możesz podać przy budowaniu, np. `npm run build -- --base=/ala-paint/`.
 
 ## Co już potrafimy?
 
@@ -96,14 +107,18 @@ Prosty JavaScript w modułach ES, HTML i CSS; Canvas 2D obsługuje rysowanie. [V
 - `src/stamps.js` — odmiany części zwierzątek, ich rysowanie i rozciąganie.
 - `src/patterns.js` — lokalnie rysowane kafelki zwierzęcych wzorów.
 - `src/sand.js` — opadanie ziarenek i przeszkody na aktywnej warstwie.
-- `public/decorations.svg`, `public/sleeping-cat.svg` — lokalne dekoracje i śpiąca maskotka.
+- `assets/decorations.svg`, `assets/sleeping-cat.svg` — lokalne dekoracje i śpiąca maskotka.
+- `src/vendor/lucide.js` — lokalna kopia używanych ikon Lucide z licencją, gotowa dla przeglądarki.
 - `src/project.js` — warstwy, format projektu, sprawdzanie plików i eksport.
 - `src/style.css` — kolory, rozmiary i układ na różnych ekranach.
 - `tests/paint.spec.js` — testy istotnych działań użytkownika.
+- `tests/deployment.spec.js` — działanie źródeł na zwykłym serwerze pod `/` i `/ala-paint/`, bez Vite.
 - `AGENTS.md` — zasady dalszej współpracy.
 - `HISTORA.md` — historia zmian.
 
 Format projektu ma identyfikator `ala-paint` i wersję `1`; każda warstwa zawiera obraz PNG zapisany w base64. Import dopuszcza pliki do 20 MB, wymiary do 2048 × 2048 i łącznie do 20 milionów pikseli warstw. Plik jest sprawdzany przed zastąpieniem bieżącej pracy. Historia cofania nie jest zapisywana w pliku projektu.
+
+Ikony są przechowywane lokalnie, bez CDN. Przy zmianie wersji Lucide lub zestawu ikon w `scripts/icons-entry.js` uruchom `npm run icons:update` i zachowaj wynik w `src/vendor/` razem z licencją. Zwykłe zmiany aplikacji nie wymagają odświeżania tej kopii.
 
 ## Sprawdzanie zmian
 

@@ -1448,13 +1448,13 @@ dialog p {
 
 /* Ozdoby należą do pracowni, więc nie trafiają na zapisywany rysunek. */
 body {
-  background: #fff4f8 url("/decorations.svg") repeat;
+  background: #fff4f8 url("../assets/decorations.svg") repeat;
 }
 .topbar {
   background: #fffafd;
 }
 .canvas-surround {
-  background: #fbe7f0 url("/decorations.svg") repeat;
+  background: #fbe7f0 url("../assets/decorations.svg") repeat;
 }
 #sleep {
   margin-left: auto;

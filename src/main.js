@@ -34,8 +34,7 @@ import {
   Hourglass,
   Moon,
   Sun,
-} from "lucide";
-import "./style.css";
+} from "./vendor/lucide.js";
 import {
   BACKGROUNDS,
   FONTS,
@@ -227,7 +226,9 @@ const sleepScreen = document.createElement("section");
 sleepScreen.id = "sleep-screen";
 sleepScreen.hidden = true;
 sleepScreen.setAttribute("aria-labelledby", "sleep-title");
-sleepScreen.innerHTML = `<div class="sleep-card"><p class="sleep-eyebrow">PRACOWNIA ALI · CISZA NOCNA</p><h1 id="sleep-title">Ciii… wyobraźnia śpi.</h1><p class="sleep-zzz">zz.. zzz... zzzz...</p><img src="${import.meta.env.BASE_URL}sleeping-cat.svg" alt="Kotek śpi w łóżku pod różową kołdrą w gwiazdki." width="600" height="380"><p>Jeszcze tylko pięć minut…<br>Twój rysunek czeka, aż wrócisz.</p><button id="wake" class="button primary">${icon("sun")} Tryb jasny — wracamy do rysowania</button></div>`;
+const sleepingCatUrl = new URL("../assets/sleeping-cat.svg", import.meta.url)
+  .href;
+sleepScreen.innerHTML = `<div class="sleep-card"><p class="sleep-eyebrow">PRACOWNIA ALI · CISZA NOCNA</p><h1 id="sleep-title">Ciii… wyobraźnia śpi.</h1><p class="sleep-zzz">zz.. zzz... zzzz...</p><img src="${sleepingCatUrl}" alt="Kotek śpi w łóżku pod różową kołdrą w gwiazdki." width="600" height="380"><p>Jeszcze tylko pięć minut…<br>Twój rysunek czeka, aż wrócisz.</p><button id="wake" class="button primary">${icon("sun")} Tryb jasny — wracamy do rysowania</button></div>`;
 document.body.append(sleepScreen);
 
 const $ = (selector) => document.querySelector(selector);
