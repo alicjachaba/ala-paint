@@ -1,0 +1,35 @@
+{
+  "name": "ala-paint",
+  "version": "0.1.0",
+  "description": "Przeglądarkowa pracownia rysunkowa Ali — JavaScript i Canvas",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alicjachaba/ala-paint.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/alicjachaba/ala-paint/issues"
+  },
+  "homepage": "https://github.com/alicjachaba/ala-paint#readme",
+  "dependencies": {
+    "lucide": "^1.47.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "prettier": "^3.9.8",
+    "vite": "^8.3.0"
+  },
+  "private": true
+}
