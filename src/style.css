@@ -529,7 +529,7 @@ input[type="range"] {
   font-size: 10px;
   gap: 8px;
 }
-.canvas-bottom > span:nth-child(2) {
+.canvas-bottom > .drawing-hint {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -960,7 +960,7 @@ dialog p {
   .canvas-surround {
     padding: 16px 15px 0;
   }
-  .canvas-bottom > span:nth-child(2) {
+  .canvas-bottom > .drawing-hint {
     display: none;
   }
   .brand {
@@ -1796,13 +1796,17 @@ footer {
   width: 100%;
   height: 60dvh;
   min-height: 0;
-  container-type: size;
   display: grid;
   place-items: center;
 }
 .paper {
-  width: min(100cqw, calc(100cqh * var(--paper-ratio, 1.5)));
+  /* Podgląd zawsze wykorzystuje szerokość; wysokość nie pomniejsza rysunku. */
+  width: 100%;
   aspect-ratio: var(--paper-ratio, 1.5);
+}
+
+.paper-space.has-project {
+  height: auto;
 }
 
 @media (min-width: 901px) {
@@ -1817,9 +1821,9 @@ footer {
     max-width: none;
     min-height: 0;
     --paper-width: 60vw;
-    grid-template-columns: minmax(0, 1fr) calc(
-        var(--paper-width) + 2rem + 2px
-      ) minmax(0, 1fr);
+    grid-template-columns:
+      minmax(0, 1fr) calc(var(--paper-width) + 2rem + 2px)
+      minmax(0, 1fr);
     gap: 1vw;
     padding-inline: 1vw;
     padding-top: 18px;
@@ -1872,13 +1876,16 @@ footer {
   .paper-space {
     flex: none;
     width: var(--paper-width);
-    height: 60dvh;
+    height: max(60dvh, calc(100dvh - 12rem));
+  }
+  .paper-space.has-project {
+    height: auto;
   }
   .encouragement {
     flex-shrink: 0;
     margin-top: 16px;
   }
-  .canvas-bottom > span:nth-child(2) {
+  .canvas-bottom > .drawing-hint {
     display: none;
   }
 }

@@ -2,6 +2,23 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-22 — Duża kartka także na Macu, bez liczników
+
+- Podgląd rysunku zajmuje całą szerokość środkowej części pracowni. Usunęliśmy ograniczenie, które pomniejszało go do wysokości kontenera; istniejące projekty zachowują proporcje i piksele, również po zmianie wielkości okna.
+- Nowa kartka na komputerze ma co najmniej wysokość widocznego przybornika. Przy tworzeniu kolejnej kartki mierzymy miejsce niezależnie od proporcji poprzedniego projektu. Zachowaliśmy gęstość obrazu dla ekranów Retina oraz limity pamięci warstw.
+- Usunęliśmy rozdzielczość i procent powiększenia z interfejsu wraz z kodem aktualizowania tych liczników. Uaktualniliśmy README.
+- Testy porównują kartkę z przybornikiem oraz sprawdzają pełną szerokość otwartego projektu w niskim oknie przy zwykłej gęstości i Retina, rysowanie myszą i dotykiem, cofanie, warstwy oraz zapis i odczyt.
+
+Sprawdzenie: `npm test -- --workers=2` — 42 testy poprawne; `npx playwright test tests/paper-size.spec.js --browser=webkit --workers=2` — 7 testów poprawnych; `npm run build` oraz sprawdzenie formatowania zmienionych plików — poprawne. Obejrzeliśmy zrzut pracowni w WebKit przy oknie 1408 × 650 i gęstości 2: nowa kartka jest szersza od przybornika i ma co najmniej jego wysokość, bez obu liczników.
+
+## 2026-09-22 — Rozmiar kartki bezpośrednio w jednostkach okna
+
+- Ustawiliśmy obszar rysowania na **60vw × 60dvh**. Szerokość i wysokość wynikają bezpośrednio z wielkości okna przeglądarki, a przyborniki dzielą pozostałe miejsce. W oknach 901–1199 px szerokość wynosi 50vw; na telefonach i tabletach kartka zajmuje szerokość sekcji oraz 60dvh wysokości.
+- Usunęliśmy wymuszanie zmieszczenia całej pracowni w wysokości okna. Przy małej wysokości przewija się strona, zamiast pomniejszać kartkę. Panele pozostają przyklejone podczas przewijania i mają własne paski przewijania.
+- Zachowaliśmy dotychczasowe przeliczanie rozdzielczości dla ekranów Retina, zapis i ochronę istniejących rysunków. Nowe testy sprawdzają faktyczny rozmiar kartki jako część okna, nie tylko jej dopasowanie do kontenera.
+
+Sprawdzenie: `npm test` — 40 testów; testy rozmiaru w WebKit — 5 testów; `npm run build` — poprawny. W WebKit przy oknie 1408 × 650 i gęstości 2 kartka ma około 845 × 390 jednostek ekranowych (pierwotnie 416 × 277). Obejrzeliśmy zrzut tego układu. Testy obejmują również pozostałe rozmiary okien, narzędzia, cofanie, warstwy oraz zapis i odczyt.
+
 ## 2026-09-22 — Kartka dopasowana do obszaru roboczego i ekranów Retina
 
 - Usunęliśmy stałe 960 × 640 jako rozmiar nowych rysunków. Nowa kartka otrzymuje szerokość, wysokość i proporcje z dostępnego miejsca: CSS wyznacza obszar względnie, a JavaScript dobiera rozdzielczość z uwzględnieniem gęstości ekranu. Dzięki temu niskie okno nie zmniejsza kartki tylko po to, by zachować proporcje 3:2.

@@ -54,7 +54,8 @@ async function openExampleProject(page) {
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(data)),
   });
-  await expect(page.locator("#dimensions")).toHaveText("960 × 640 px");
+  await expect(page.locator("#drawing")).toHaveJSProperty("width", 960);
+  await expect(page.locator("#drawing")).toHaveJSProperty("height", 640);
 }
 
 test.beforeEach(async ({ page }) => {

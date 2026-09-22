@@ -11,6 +11,11 @@ async function layout(page) {
     return {
       imageWidth: canvas.width,
       imageHeight: canvas.height,
+      toolsWidth: document.querySelector(".tools-panel").getBoundingClientRect()
+        .width,
+      toolsHeight: document
+        .querySelector(".tools-panel")
+        .getBoundingClientRect().height,
       width: box.width,
       height: box.height,
       spaceWidth: space.width,
@@ -45,6 +50,32 @@ for (const density of [1, 2]) {
       hasTouch: true,
     });
 
+    test("otwarty rysunek zachowuje pełną szerokość także w niskim oknie", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      const legacy = await page.evaluate(async () => {
+        const { newProject, serialize } = await import("/src/project.js");
+        return serialize(newProject({ width: 960, height: 640 }));
+      });
+      await page.locator("#file-input").setInputFiles({
+        name: "rysunek.ala.json",
+        mimeType: "application/json",
+        buffer: Buffer.from(JSON.stringify(legacy)),
+      });
+      await expect(page.locator("#drawing")).toHaveJSProperty("width", 960);
+      for (const height of [650, 500, 900]) {
+        await page.setViewportSize({ width: 1408, height });
+        const size = await layout(page);
+        expectFilledSpace(size);
+        expect(Math.abs(size.width - 1408 * 0.6)).toBeLessThan(2);
+        expect(size.width / size.height).toBeCloseTo(1.5, 2);
+        expect(size.width).toBeGreaterThan(size.toolsWidth);
+        expect([size.imageWidth, size.imageHeight]).toEqual([960, 640]);
+        await expect(page.locator("#zoom, #dimensions")).toHaveCount(0);
+      }
+    });
+
     test("wypełnia miejsce, rysuje i zachowuje rozdzielczość w plikach oraz po zmianie okna", async ({
       page,
     }) => {
@@ -53,14 +84,16 @@ for (const density of [1, 2]) {
       const size = await layout(page);
       expectFilledSpace(size);
       expect(Math.abs(size.width - 1408 * 0.6)).toBeLessThan(2);
-      expect(Math.abs(size.height - 650 * 0.6)).toBeLessThan(2);
+      expect(size.width).toBeGreaterThan(size.toolsWidth);
+      expect(size.height).toBeGreaterThanOrEqual(size.toolsHeight - 2);
       expect(size.imageWidth).toBe(Math.floor(size.spaceWidth * density));
       expect(size.imageHeight).toBe(Math.floor(size.spaceHeight * density));
       expect(size.pageWidth).toBe(1408);
       expect(size.pageHeight).toBeGreaterThanOrEqual(650);
-      await expect(page.locator("#zoom")).toHaveText("100%");
+      await expect(page.locator("#zoom, #dimensions")).toHaveCount(0);
       const blank = await imageOf(page);
       const canvas = page.locator("#drawing");
+      await canvas.scrollIntoViewIfNeeded();
       const box = await canvas.boundingBox();
       await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2);
       await page.mouse.down();
@@ -149,6 +182,8 @@ for (const density of [1, 2]) {
       await page.setViewportSize({ width: 1920, height: 1080 });
       expect(await imageOf(page)).toBe(drawing);
       const resized = await layout(page);
+      expectFilledSpace(resized);
+      expect(resized.width).toBeGreaterThan(size.width);
       expect(resized.width / resized.height).toBeCloseTo(
         project.width / project.height,
         2,
@@ -189,7 +224,8 @@ test("nowe kartki mają proporcje miejsca na telefonie, laptopie i dużym ekrani
       const fraction = width < 1200 ? 0.5 : 0.6;
       // Sprawdzamy rozmiar względem okna, nie tylko wypełnienie kontenera.
       expect(Math.abs(size.width - width * fraction)).toBeLessThan(2);
-      expect(Math.abs(size.height - height * 0.6)).toBeLessThan(2);
+      expect(size.width).toBeGreaterThan(size.toolsWidth);
+      expect(size.height).toBeGreaterThanOrEqual(size.toolsHeight - 2);
     }
   }
 });
@@ -242,7 +278,8 @@ test("import wersji 1 działa, a błędna gęstość w wersji 2 nie zastępuje p
       buffer: Buffer.from(JSON.stringify(data)),
     });
   await openData(legacy);
-  await expect(page.locator("#dimensions")).toHaveText("960 × 640 px");
+  await expect(page.locator("#drawing")).toHaveJSProperty("width", 960);
+  await expect(page.locator("#drawing")).toHaveJSProperty("height", 640);
   const before = await imageOf(page);
   const project = JSON.parse(
     await readFile(await download(page, "#save-project"), "utf8"),

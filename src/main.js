@@ -208,7 +208,7 @@ app.innerHTML = `
       <div class="drawing-toolbar"><div class="drawing-title"><label class="sr-only" for="project-name">Nazwa rysunku</label><input id="project-name" maxlength="80" value="Mój pierwszy rysunek"><span id="save-status"><span class="status-dot"></span> Gotowy na twoje pomysły</span></div>
         <div class="history-actions"><button id="undo" class="icon-button" title="Cofnij (Ctrl / ⌘ + Z)" aria-label="Cofnij" disabled>${icon("undo-2")}</button><button id="redo" class="icon-button" title="Ponów (Ctrl / ⌘ + Shift + Z)" aria-label="Ponów" disabled>${icon("redo-2")}</button></div>
       </div>
-      <div class="canvas-surround"><div class="paper-label">TWOJA WYOBRAŹNIA MA TU MIEJSCE <span>✧</span></div><div class="paper-space"><div class="paper"><canvas id="drawing" aria-label="Kartka do rysowania. Rysuj myszą, palcem lub rysikiem."></canvas></div></div><div class="canvas-bottom"><span id="dimensions"></span><span>${icon("mouse-pointer-2")}<span id="canvas-hint">Wybierz kolor i narysuj coś swojego</span></span><span id="zoom">100%</span></div></div>
+      <div class="canvas-surround"><div class="paper-label">TWOJA WYOBRAŹNIA MA TU MIEJSCE <span>✧</span></div><div class="paper-space"><div class="paper"><canvas id="drawing" aria-label="Kartka do rysowania. Rysuj myszą, palcem lub rysikiem."></canvas></div></div><div class="canvas-bottom"><span class="drawing-hint">${icon("mouse-pointer-2")}<span id="canvas-hint">Wybierz kolor i narysuj coś swojego</span></span></div></div>
       <div class="encouragement"><span class="encouragement-icon">✳</span><p>Tu nie ma złych kresek.<br><strong>Są tylko nowe pomysły!</strong></p><span class="doodle">✧</span></div>
     </section>
     <aside class="details-panel" aria-label="Warstwy i tło">
@@ -413,7 +413,7 @@ function renderAll() {
   if (canvas.width !== project.width) canvas.width = project.width;
   if (canvas.height !== project.height) canvas.height = project.height;
   $("#project-name").value = project.name;
-  $("#dimensions").textContent = `${project.width} × ${project.height} px`;
+  $(".paper-space").classList.add("has-project");
   document.querySelectorAll("[data-background]").forEach((button) => {
     const selected = button.dataset.background === project.background;
     button.setAttribute("aria-pressed", selected);
@@ -425,7 +425,6 @@ function renderAll() {
   renderLayers();
   updateHistory();
   updateHint();
-  updateZoom();
 }
 
 function setColor(color) {
@@ -942,11 +941,6 @@ window.addEventListener("beforeunload", (event) => {
     event.returnValue = "";
   }
 });
-function updateZoom() {
-  $("#zoom").textContent =
-    `${Math.round(((canvas.getBoundingClientRect().width * project.pixelRatio) / canvas.width) * 100)}%`;
-}
-new ResizeObserver(updateZoom).observe(canvas);
 // Najpierw układamy interfejs, aby nowa kartka dostała rzeczywiście dostępne miejsce.
 refreshIcons();
 project = newProject(paperSize($(".paper-space")));
