@@ -24,6 +24,11 @@ Katalog `dist/` można opublikować na hostingu statycznym. Aplikacja nie potrze
 
 - Rysować pędzlem, cienkim ołówkiem i sprayem; wymazywać gumką.
 - Wybierać kolor z palety lub ustawić własny, zmieniać wielkość narzędzia.
+- Rysować tęczą: kolor zmienia się w czasie prowadzenia kreski.
+- Dodawać stempelki: oczy, ogon, uszy i łapy; wybierać ich kolor, wielkość i obrót.
+- Sypać kolorowy piasek, który spada i usypuje się na kreskach tej samej warstwy.
+- Pracować w różowej pracowni z delikatnymi gwiazdkami, słoneczkami i serduszkami.
+- Włączyć żartobliwy tryb ciemny: pracownię zastępuje kotek śpiący w łóżku. Tryb jasny przywraca rysunek i historię cofania.
 - Rysować linie, koła/elipsy i prostokąty przez przeciągnięcie.
 - Dodawać tekst: wpisać napis, wybrać czcionkę i wielkość, kliknąć na kartce.
 - Dodawać, ukrywać, przestawiać i usuwać warstwy (maksymalnie 12). Górna warstwa na liście znajduje się na wierzchu rysunku.
@@ -35,6 +40,18 @@ Katalog `dist/` można opublikować na hostingu statycznym. Aplikacja nie potrze
 Kartka startowa ma **960 × 640 pikseli**. Skaluje się do ekranu, zachowując rozdzielczość obrazu. Pokazany procent to aktualna skala wyświetlania.
 
 Czcionki korzystają z lokalnych fontów systemowych (Trebuchet MS, Comic Sans MS / Chalkboard SE, Georgia, Arial, Courier New) i zamienników. Ich wygląd może różnić się pomiędzy urządzeniami. Tekst staje się częścią obrazu aktywnej warstwy — można go cofnąć lub wymazać, ale nie edytować jak w edytorze tekstu.
+
+## Zwierzątka, tęcza i piasek
+
+W sekcji **Zwierzątka Ali** wybierz **Oczy**, **Ogon**, **Uszy** lub **Łapy**. Ustaw wielkość i obrót, wybierz kolor i kliknij na kartce. Każde kliknięcie dodaje jeden stempelek na zaznaczonej warstwie. Można go cofnąć albo wymazać; po przybiciu staje się częścią obrazu, tak jak kreska. Na komputerze przybornik można przewijać niezależnie od kartki.
+
+Przycisk **Tęczowy** w palecie włącza zmieniające się kolory pędzla, ołówka, sprayu i sypanego piasku. Kształty oraz tekst dostają tęczowe przejście kolorów, a kolejne stempelki otrzymują kolejne kolory tęczy. Kliknięcie zwykłego koloru wyłącza tęczę. Gumka nadal wymazuje.
+
+Wybierz **Piasek**, kolor oraz wielkość strumienia, a następnie przytrzymaj mysz, palec lub rysik nad kartką. Ziarenka przyspieszają w dół, zsuwają się na boki i tworzą kupkę. Zatrzymują się na dnie kartki oraz na dowolnych nieprzezroczystych pikselach **tej samej warstwy**, również białych i częściowo przezroczystych. Tło kartki i pozostałe warstwy nie zatrzymują piasku.
+
+Po puszczeniu przycisku pozostałe ziarenka opadają. Jeśli wcześniej wybierzesz inną czynność (np. zapis, zmianę warstwy albo tryb ciemny), piasek od razu osiądzie. Całe jedno sypanie cofniesz jednym kliknięciem. Osiadły piasek staje się zwykłym rysunkiem: zachowuje się w JSON, PNG i WebP, ale po wymazaniu podpory nie zaczyna ponownie spadać.
+
+**Tryb ciemny** to przerwa na sen: rysunek i przyciski znikają, a skróty pracowni są wyłączone. Przycisk **Tryb jasny — wracamy do rysowania** przywraca pracę. Dekoracje i śpiący kotek nie trafiają do eksportowanego obrazka.
 
 ## Jak zachować rysunek?
 
@@ -52,6 +69,10 @@ Prosty JavaScript w modułach ES, HTML i CSS; Canvas 2D obsługuje rysowanie. [V
 
 - `src/main.js` — interfejs i obsługa przycisków, historii oraz gestów.
 - `src/drawing.js` — kreski, spray i kształty.
+- `src/colors.js` — zmieniające się kolory tęczy i tęczowe przejścia.
+- `src/stamps.js` — rysowanie części zwierzątek.
+- `src/sand.js` — opadanie ziarenek i przeszkody na aktywnej warstwie.
+- `public/decorations.svg`, `public/sleeping-cat.svg` — lokalne dekoracje i śpiąca maskotka.
 - `src/project.js` — warstwy, format projektu, sprawdzanie plików i eksport.
 - `src/style.css` — kolory, rozmiary i układ na różnych ekranach.
 - `tests/paint.spec.js` — testy istotnych działań użytkownika.
@@ -69,8 +90,8 @@ npm run build
 npm run format:check
 ```
 
-Testy obejmują rysowanie, cofanie, warstwy, gumkę, tekst, kształty, zapis i odczyt JSON, formaty eksportu, błędny import oraz dotyk na małym ekranie. Są wykonywane w Chromium; pozostałe przeglądarki wymagają osobnej weryfikacji.
+Testy obejmują rysowanie, cofanie, warstwy, gumkę, tekst, kształty, zapis i odczyt JSON, formaty eksportu, błędny import oraz dotyk na małym ekranie. Sprawdzają też stempelki, zmianę kolorów w tęczowej kresce, opadanie piasku, przeszkody tylko na tej samej warstwie, zapis ziarenek, przerwanie sypania oraz bezpieczny powrót z trybu snu. Są wykonywane w Chromium; pozostałe przeglądarki wymagają osobnej weryfikacji.
 
 ## Kolejne przygody
 
-W kolejnych etapach możemy dodać gotowe oczy i minki, ilustrowane tła, naklejki, zmianę rozmiaru kartki oraz automatyczny zapis. Na razie skupiamy się na podstawowej pracowni do rysowania.
+W kolejnych etapach możemy dodać więcej części zwierzątek i minek, ilustrowane tła kartki, zmianę rozmiaru kartki oraz automatyczny zapis.

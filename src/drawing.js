@@ -1,3 +1,5 @@
+import { nextColor, shapeColor } from "./colors.js";
+
 // Współrzędne rysunku są niezależne od wielkości płótna na ekranie.
 export function canvasPoint(event, canvas) {
   const bounds = canvas.getBoundingClientRect();
@@ -7,7 +9,28 @@ export function canvasPoint(event, canvas) {
   };
 }
 
-export function drawStroke(context, from, to, { tool, color, size }) {
+export function drawStroke(context, from, to, settings) {
+  if (settings.color !== "rainbow" || settings.tool === "eraser") {
+    solidStroke(context, from, to, settings);
+    return;
+  }
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  const steps = Math.max(1, Math.ceil(distance / 3));
+  let previous = from;
+  for (let step = 1; step <= steps; step++) {
+    const point = {
+      x: from.x + ((to.x - from.x) * step) / steps,
+      y: from.y + ((to.y - from.y) * step) / steps,
+    };
+    solidStroke(context, previous, point, {
+      ...settings,
+      color: nextColor(settings, distance / steps),
+    });
+    previous = point;
+  }
+}
+
+function solidStroke(context, from, to, { tool, color, size }) {
   context.save();
   context.lineCap = "round";
   context.lineJoin = "round";
@@ -47,9 +70,10 @@ export function drawStroke(context, from, to, { tool, color, size }) {
   context.restore();
 }
 
-export function drawShape(context, start, end, { tool, color, size }) {
+export function drawShape(context, start, end, settings) {
+  const { tool, size } = settings;
   context.save();
-  context.strokeStyle = color;
+  context.strokeStyle = shapeColor(context, settings, start, end);
   context.lineWidth = Math.max(2, size / 3);
   context.lineCap = "round";
   context.lineJoin = "round";

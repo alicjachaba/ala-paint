@@ -28,6 +28,12 @@ import {
   ImageDown,
   FileJson,
   MousePointer2,
+  PawPrint,
+  Ear,
+  Squirrel,
+  Hourglass,
+  Moon,
+  Sun,
 } from "lucide";
 import "./style.css";
 import {
@@ -45,6 +51,10 @@ import {
   filename,
 } from "./project.js";
 import { canvasPoint, drawStroke, drawShape } from "./drawing.js";
+
+import { STAMPS, drawStamp } from "./stamps.js";
+import { createSand } from "./sand.js";
+import { nextColor, shapeColor } from "./colors.js";
 
 const iconSet = {
   Paintbrush,
@@ -75,6 +85,12 @@ const iconSet = {
   ImageDown,
   FileJson,
   MousePointer2,
+  PawPrint,
+  Ear,
+  Squirrel,
+  Hourglass,
+  Moon,
+  Sun,
 };
 const icon = (name) => `<i data-lucide="${name}" aria-hidden="true"></i>`;
 const refreshIcons = () =>
@@ -102,9 +118,17 @@ const toolsList = [
   ["circle", "Koło", "circle"],
   ["rectangle", "Prostokąt", "square"],
   ["text", "Tekst", "type"],
+  ["sand", "Piasek", "hourglass"],
 ];
 let project = newProject();
-let settings = { tool: "brush", color: colors[0][0], size: 12 };
+let settings = {
+  tool: "brush",
+  color: colors[0][0],
+  size: 12,
+  stampSize: 100,
+  rotation: 0,
+  hue: 0,
+};
 let past = [];
 let future = [];
 let savedSnapshot = JSON.stringify(serialize(project));
@@ -112,13 +136,16 @@ let dirty = false;
 let busy = false;
 let gesture = null;
 let toastTimer;
+let sandFrame;
+let sleeping = false;
+const stampTools = STAMPS.map(([id]) => id);
 const shapes = ["line", "circle", "rectangle"];
 
 const app = document.querySelector("#app");
 app.innerHTML = `
   <header class="topbar">
     <a class="brand" href="./" aria-label="Ala Paint — strona główna"><span class="brand-mark">${icon("paintbrush")}</span><span>Ala<span class="brand-accent">Paint</span><small>MAŁA PRACOWNIA, WIELKA WYOBRAŹNIA</small></span></a>
-    <span class="private-note"><span class="green-dot"></span> Twoje pomysły, twoje miejsce</span>
+    <button id="sleep" class="button subtle">${icon("moon")}<span>Tryb ciemny</span></button>
     <div class="file-actions">
       <button id="new" class="button subtle">${icon("plus")}<span>Nowy</span></button>
       <button id="open" class="button subtle">${icon("folder-open")}<span>Otwórz</span></button>
@@ -135,8 +162,17 @@ app.innerHTML = `
     <aside class="tools-panel panel" aria-label="Narzędzia do rysowania">
       <div class="section-heading"><h2>Przybornik</h2>${icon("sparkles")}</div>
       <div class="tool-grid">${toolsList.map(([id, label, symbol]) => `<button class="tool ${id === "brush" ? "selected" : ""}" data-tool="${id}" aria-pressed="${id === "brush"}">${icon(symbol)}<span>${label}</span></button>`).join("")}</div>
+      <section class="control-section"><div class="section-heading"><h2>Zwierzątka Ali</h2>${icon("paw-print")}</div>
+        <div class="tool-grid stamp-grid">${STAMPS.map(([id, label, symbol]) => `<button class="tool" data-tool="${id}" aria-pressed="false">${icon(symbol)}<span>${label}</span></button>`).join("")}</div>
+        <div id="stamp-controls" hidden>
+          <label for="stamp-size">Wielkość zwierzątka <output id="stamp-size-value">100</output></label><input id="stamp-size" type="range" min="30" max="300" value="100">
+          <label for="stamp-rotation">Obrót <output id="stamp-rotation-value">0°</output></label><input id="stamp-rotation" type="range" min="-180" max="180" step="15" value="0">
+          <p class="hint">Kliknij na kartce, aby przybić stempelek.</p>
+        </div>
+      </section>
       <section class="control-section"><div class="section-heading"><h2>Kolory</h2>${icon("palette")}</div>
         <div class="color-grid">${colors.map(([color, label], index) => `<button class="swatch ${index === 0 ? "selected" : ""}" style="--swatch:${color}" data-color="${color}" aria-label="${label}" aria-pressed="${index === 0}" title="${label}"></button>`).join("")}</div>
+        <button class="rainbow-button" data-color="rainbow" aria-pressed="false"><span class="rainbow-dot" aria-hidden="true"></span>Tęczowy</button>
         <label class="custom-color"><input id="custom-color" type="color" value="#7655ce" aria-label="Własny kolor"><span>Twój własny kolor</span><span class="plus-label">+</span></label>
       </section>
       <section class="control-section size-control"><div class="section-heading"><label for="brush-size">Wielkość</label><output id="size-value" for="brush-size">12</output></div>
@@ -161,7 +197,7 @@ app.innerHTML = `
         <div class="layer-actions"><button id="layer-up" class="icon-button" aria-label="Przesuń warstwę wyżej" title="Przesuń wyżej">${icon("arrow-up")}</button><button id="layer-down" class="icon-button" aria-label="Przesuń warstwę niżej" title="Przesuń niżej">${icon("arrow-down")}</button><span></span><button id="delete-layer" class="icon-button danger" aria-label="Usuń warstwę" title="Usuń warstwę">${icon("trash-2")}</button></div><p class="hint layer-hint">Rysujesz na zaznaczonej warstwie.</p>
       </section>
       <section class="panel background-panel"><div class="section-heading"><h2>Tło kartki</h2>${icon("image-down")}</div><p class="section-description">Od czego dziś zaczniemy?</p><div class="background-grid">${BACKGROUNDS.map((bg) => `<button data-background="${bg.id}" class="background-choice" aria-pressed="${bg.id === "white"}"><span class="background-sample ${bg.id === "transparent" ? "checkerboard" : ""}" style="--background:${bg.color || "transparent"}">${bg.id === "white" ? icon("check") : ""}</span><span>${bg.name}</span></button>`).join("")}</div></section>
-      <div class="future-card"><span class="eyebrow">JESZCZE WIĘCEJ WYOBRAŹNI</span><div class="little-eyes"><span></span><span></span><b>✧</b></div><h3>Postacie z charakterem</h3><p>Oczy, minki i inne cuda…<br>Dodamy je w kolejnych przygodach!</p><span class="soon">W planach</span></div>
+      <div class="future-card"><span class="eyebrow">JESZCZE WIĘCEJ WYOBRAŹNI</span><div class="little-eyes"><span></span><span></span><b>✧</b></div><h3>Postacie z charakterem</h3><p>Oczy, minki i inne cuda…<br>Wybierz oczy, uszy, łapy lub ogon<br>i stwórz własnego przyjaciela!</p><span class="soon">Już w przyborniku!</span></div>
     </aside>
   </main>
   <footer><span>Stworzone dla Ali i jej wyobraźni ${icon("heart")}</span><span>Rysunki zostają u ciebie · bez konta, bez pośpiechu</span></footer>
@@ -169,6 +205,13 @@ app.innerHTML = `
   <div id="toast" role="status" aria-live="polite" hidden></div>
   <dialog id="confirm-dialog"><form method="dialog"><div class="dialog-icon">${icon("sparkles")}</div><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="dialog-actions"><button value="cancel" class="button subtle" autofocus>Wróć do rysowania</button><button value="confirm" class="button primary" id="confirm-button">Tak, zaczynamy</button></div></form></dialog>
 `;
+const sleepScreen = document.createElement("section");
+sleepScreen.id = "sleep-screen";
+sleepScreen.hidden = true;
+sleepScreen.setAttribute("aria-labelledby", "sleep-title");
+sleepScreen.innerHTML = `<div class="sleep-card"><p class="sleep-eyebrow">PRACOWNIA ALI · CISZA NOCNA</p><h1 id="sleep-title">Ciii… wyobraźnia śpi.</h1><p class="sleep-zzz">zz.. zzz... zzzz...</p><img src="./sleeping-cat.svg" alt="Kotek śpi w łóżku pod różową kołdrą w gwiazdki." width="600" height="380"><p>Jeszcze tylko pięć minut…<br>Twój rysunek czeka, aż wrócisz.</p><button id="wake" class="button primary">${icon("sun")} Tryb jasny — wracamy do rysowania</button></div>`;
+document.body.append(sleepScreen);
+
 const $ = (selector) => document.querySelector(selector);
 const canvas = $("#drawing");
 const context = canvas.getContext("2d");
@@ -207,6 +250,8 @@ function renderCanvas() {
   project.layers.forEach((layer) => {
     if (!layer.visible) return;
     context.drawImage(layer.canvas, 0, 0);
+    if (gesture?.sand && layer.id === gesture.layer.id)
+      gesture.sand.draw(context);
     if (
       gesture &&
       shapes.includes(gesture.settings.tool) &&
@@ -306,11 +351,15 @@ function renderLayers() {
 function updateHint() {
   $("#canvas-hint").textContent = !activeLayer().visible
     ? "Ta warstwa jest ukryta. Włącz ją przyciskiem oka."
-    : settings.tool === "text"
-      ? "Wpisz tekst w przyborniku i kliknij na kartce"
-      : shapes.includes(settings.tool)
-        ? "Przeciągnij po kartce, aby narysować kształt"
-        : "Wybierz kolor i narysuj coś swojego";
+    : settings.tool === "sand"
+      ? "Przytrzymaj, aby sypać. Piasek zatrzyma się na kreskach tej warstwy."
+      : stampTools.includes(settings.tool)
+        ? "Wybierz wielkość i obrót, a potem kliknij na kartce"
+        : settings.tool === "text"
+          ? "Wpisz tekst w przyborniku i kliknij na kartce"
+          : shapes.includes(settings.tool)
+            ? "Przeciągnij po kartce, aby narysować kształt"
+            : "Wybierz kolor i narysuj coś swojego";
 }
 
 function renderAll() {
@@ -333,8 +382,11 @@ function renderAll() {
 
 function setColor(color) {
   settings.color = color;
-  $("#custom-color").value = color;
-  document.documentElement.style.setProperty("--drawing-color", color);
+  if (color !== "rainbow") $("#custom-color").value = color;
+  document.documentElement.style.setProperty(
+    "--drawing-color",
+    color === "rainbow" ? "#ec4899" : color,
+  );
   document.querySelectorAll("[data-color]").forEach((button) => {
     const selected = button.dataset.color === color;
     button.classList.toggle("selected", selected);
@@ -351,6 +403,7 @@ document.querySelectorAll("[data-tool]").forEach(
         item.setAttribute("aria-pressed", item === button);
       });
       $("#text-controls").hidden = settings.tool !== "text";
+      $("#stamp-controls").hidden = !stampTools.includes(settings.tool);
       canvas.style.cursor = settings.tool === "text" ? "text" : "crosshair";
       updateHint();
     }),
@@ -358,6 +411,14 @@ document.querySelectorAll("[data-tool]").forEach(
 document
   .querySelectorAll("[data-color]")
   .forEach((button) => (button.onclick = () => setColor(button.dataset.color)));
+$("#stamp-size").oninput = (event) => {
+  settings.stampSize = Number(event.target.value);
+  $("#stamp-size-value").value = settings.stampSize;
+};
+$("#stamp-rotation").oninput = (event) => {
+  settings.rotation = Number(event.target.value);
+  $("#stamp-rotation-value").value = `${settings.rotation}°`;
+};
 $("#custom-color").oninput = (event) => setColor(event.target.value);
 $("#brush-size").oninput = (event) => {
   settings.size = Number(event.target.value);
@@ -382,7 +443,8 @@ $("#project-name").onchange = (event) => {
 };
 
 canvas.addEventListener("pointerdown", (event) => {
-  if (busy || gesture || event.button !== 0) return;
+  if (gesture?.sand && !gesture.pouring) finishSand();
+  if (sleeping || busy || gesture || event.button !== 0) return;
   if (!activeLayer().visible) {
     toast("Najpierw pokaż tę warstwę — kliknij oko obok jej nazwy.");
     return;
@@ -391,6 +453,15 @@ canvas.addEventListener("pointerdown", (event) => {
   const point = canvasPoint(event, canvas);
   const layer = activeLayer();
   const before = snapshot();
+  if (stampTools.includes(settings.tool)) {
+    drawStamp(layer.canvas.getContext("2d"), point, {
+      ...settings,
+      color: nextColor(settings),
+    });
+    commit(before);
+    renderCanvas();
+    return;
+  }
   if (settings.tool === "text") {
     const text = $("#text-value").value.trim();
     const size = Number($("#font-size").value);
@@ -407,7 +478,10 @@ canvas.addEventListener("pointerdown", (event) => {
     ctx.save();
     ctx.font = `${size}px ${FONTS[Number($("#font-family").value)].family}`;
     ctx.textBaseline = "top";
-    ctx.fillStyle = settings.color;
+    ctx.fillStyle = shapeColor(ctx, settings, point, {
+      x: point.x + ctx.measureText(text).width,
+      y: point.y,
+    });
     ctx.fillText(text, point.x, point.y);
     ctx.restore();
     commit(before);
@@ -423,7 +497,13 @@ canvas.addEventListener("pointerdown", (event) => {
     settings: { ...settings },
   };
   canvas.setPointerCapture(event.pointerId);
-  if (!shapes.includes(settings.tool))
+  if (settings.tool === "sand") {
+    gesture.sand = createSand(layer.canvas);
+    gesture.pouring = true;
+    gesture.lastFrame = performance.now();
+    gesture.sand.pour(point, settings.size, nextColor(gesture.settings));
+    sandFrame = requestAnimationFrame(animateSand);
+  } else if (!shapes.includes(settings.tool))
     drawStroke(layer.canvas.getContext("2d"), point, point, gesture.settings);
   renderCanvas();
 });
@@ -432,7 +512,7 @@ canvas.addEventListener("pointermove", (event) => {
   const samples = event.getCoalescedEvents?.();
   for (const sample of samples?.length ? samples : [event]) {
     const point = canvasPoint(sample, canvas);
-    if (!shapes.includes(gesture.settings.tool))
+    if (!gesture.sand && !shapes.includes(gesture.settings.tool))
       drawStroke(
         gesture.layer.canvas.getContext("2d"),
         gesture.last,
@@ -445,9 +525,15 @@ canvas.addEventListener("pointermove", (event) => {
 });
 function finishGesture(event) {
   if (!gesture || event.pointerId !== gesture.pointerId) return;
+  if (gesture.sand) {
+    gesture.pouring = false;
+    if (canvas.hasPointerCapture(gesture.pointerId))
+      canvas.releasePointerCapture(gesture.pointerId);
+    return;
+  }
   if (event.type === "pointerup") {
     const point = canvasPoint(event, canvas);
-    if (!shapes.includes(gesture.settings.tool))
+    if (!gesture.sand && !shapes.includes(gesture.settings.tool))
       drawStroke(
         gesture.layer.canvas.getContext("2d"),
         gesture.last,
@@ -463,6 +549,7 @@ function finishGesture(event) {
       gesture.last,
       gesture.settings,
     );
+  settings.hue = gesture.settings.hue;
   const before = gesture.before;
   const pointerId = gesture.pointerId;
   gesture = null;
@@ -474,6 +561,80 @@ function finishGesture(event) {
 canvas.addEventListener("pointerup", finishGesture);
 canvas.addEventListener("pointercancel", finishGesture);
 canvas.addEventListener("lostpointercapture", finishGesture);
+
+// Po puszczeniu ziarenka jeszcze spadają. Kolejna czynność najpierw je osadza.
+function animateSand(time) {
+  if (!gesture?.sand) return;
+  // Stałe tempo sypania także na ekranach 120 Hz; bez nadrabiania długich przerw.
+  if (time - gesture.lastFrame < 1000 / 60) {
+    sandFrame = requestAnimationFrame(animateSand);
+    return;
+  }
+  gesture.lastFrame = time - ((time - gesture.lastFrame) % (1000 / 60));
+  if (gesture.pouring)
+    gesture.sand.pour(
+      gesture.last,
+      gesture.settings.size,
+      nextColor(gesture.settings),
+    );
+  const remaining = gesture.sand.step();
+  renderCanvas();
+  if (!gesture.pouring && !remaining) finishSand();
+  else sandFrame = requestAnimationFrame(animateSand);
+}
+function finishSand() {
+  if (!gesture?.sand) return;
+  cancelAnimationFrame(sandFrame);
+  gesture.sand.settle();
+  const { before, pointerId } = gesture;
+  settings.hue = gesture.settings.hue;
+  gesture = null;
+  if (canvas.hasPointerCapture(pointerId))
+    canvas.releasePointerCapture(pointerId);
+  commit(before);
+  renderCanvas();
+}
+document.addEventListener(
+  "pointerdown",
+  (event) => {
+    if (event.target !== canvas && gesture?.sand) finishSand();
+  },
+  true,
+);
+document.addEventListener(
+  "click",
+  (event) => {
+    if (event.target !== canvas && gesture?.sand) finishSand();
+  },
+  true,
+);
+window.addEventListener("blur", () => {
+  if (gesture?.sand) finishSand();
+  else if (gesture) finishGesture({ pointerId: gesture.pointerId });
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && gesture?.sand) finishSand();
+});
+$("#sleep").onclick = () => {
+  if (busy) return;
+  finishSand();
+  if (gesture) finishGesture({ pointerId: gesture.pointerId });
+  closeSaveMenu();
+  sleeping = true;
+  app.hidden = true;
+  app.inert = true;
+  sleepScreen.hidden = false;
+  document.body.classList.add("sleeping");
+  $("#wake").focus();
+};
+$("#wake").onclick = () => {
+  sleeping = false;
+  sleepScreen.hidden = true;
+  app.hidden = false;
+  app.inert = false;
+  document.body.classList.remove("sleeping");
+  $("#sleep").focus();
+};
 
 async function travelHistory(direction) {
   if (busy || gesture) return;
@@ -545,6 +706,12 @@ document.addEventListener("click", (event) => {
   if (!event.target.closest(".save-wrap")) closeSaveMenu();
 });
 document.addEventListener("keydown", (event) => {
+  if (sleeping) return;
+  if (
+    (event.ctrlKey || event.metaKey) &&
+    ["z", "y", "s"].includes(event.key.toLowerCase())
+  )
+    finishSand();
   if (event.key === "Escape") closeSaveMenu();
   if (event.target.closest("input, textarea, select, dialog")) return;
   if (event.ctrlKey || event.metaKey) {

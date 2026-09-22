@@ -7,6 +7,7 @@ async function stroke(
   end = { x: 450, y: 300 },
 ) {
   const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
   const box = await canvas.boundingBox();
   const dimensions = await canvas.evaluate((element) => ({
     width: element.width,
@@ -285,4 +286,230 @@ test("interfejs nie wychodzi poza ekran przy różnych szerokościach", async ({
       ),
     ).toBe(true);
   }
+});
+
+async function imageOf(page) {
+  return page.locator("#drawing").evaluate((canvas) => canvas.toDataURL());
+}
+async function setRange(page, selector, value) {
+  await page.locator(selector).evaluate((input, value) => {
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }, String(value));
+}
+async function holdSand(page, point, duration = 300) {
+  const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  await page.mouse.move(
+    box.x + (point.x * box.width) / 960,
+    box.y + (point.y * box.height) / 640,
+  );
+  await page.mouse.down();
+  await page.waitForTimeout(duration);
+  await page.mouse.up();
+}
+async function countColor(page, { x, y, width, height }, color) {
+  return page.locator("#drawing").evaluate(
+    (canvas, { x, y, width, height, color }) => {
+      const data = canvas
+        .getContext("2d")
+        .getImageData(x, y, width, height).data;
+      let count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (color.every((value, channel) => data[i + channel] === value))
+          count++;
+      }
+      return count;
+    },
+    { x, y, width, height, color },
+  );
+}
+
+test("każde zwierzątko daje się cofnąć, obrócić i zachować w projekcie", async ({
+  page,
+}) => {
+  await page
+    .getByRole("button", { name: "Dodaj warstwę", exact: true })
+    .click();
+  const blank = await imageOf(page);
+  for (const name of ["Oczy", "Ogon", "Uszy", "Łapy"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await setRange(page, "#stamp-size", 150);
+    await setRange(page, "#stamp-rotation", 45);
+    await page.locator("#drawing").click({ position: { x: 140, y: 120 } });
+    expect(await imageOf(page)).not.toBe(blank);
+    await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+  await page.getByRole("button", { name: "Ponów", exact: true }).click();
+  await expect.poll(() => imageOf(page)).not.toBe(blank);
+  const paws = await imageOf(page);
+  await page
+    .getByRole("button", { name: "Ukryj: Warstwa 2", exact: true })
+    .click();
+  expect(await imageOf(page)).toBe(blank);
+  await page
+    .getByRole("button", { name: "Pokaż: Warstwa 2", exact: true })
+    .click();
+  const file = await getDownload(page, "#save-project");
+  await page.getByRole("button", { name: "Nowy", exact: true }).click();
+  await page.locator("#file-input").setInputFiles(await file.path());
+  await expect.poll(() => imageOf(page)).toBe(paws);
+});
+
+test("tęcza zmienia kolory w jednej kresce, zwykły kolor je przywraca", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Tęczowy", exact: true }).click();
+  await stroke(page, { x: 100, y: 200 }, { x: 700, y: 200 });
+  const samples = await Promise.all(
+    [150, 300, 450, 600].map((x) => pixels(page, x, 200)),
+  );
+  expect(new Set(samples.map((color) => color.join())).size).toBe(4);
+  expect(
+    samples.every(
+      (color) =>
+        color[3] === 255 && color.slice(0, 3).some((channel) => channel < 200),
+    ),
+  ).toBe(true);
+  const rainbow = await imageOf(page);
+  await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+  await expect.poll(() => pixels(page, 300, 200)).toEqual([255, 255, 255, 255]);
+  await page.getByRole("button", { name: "Ponów", exact: true }).click();
+  await expect.poll(() => imageOf(page)).toBe(rainbow);
+  await page.getByRole("button", { name: "Czerwony", exact: true }).click();
+  await stroke(page, { x: 100, y: 300 }, { x: 700, y: 300 });
+  expect(await pixels(page, 300, 300)).toEqual([239, 99, 99, 255]);
+  expect(await pixels(page, 600, 300)).toEqual([239, 99, 99, 255]);
+});
+
+test("piasek opada na kreskę tej samej warstwy, a na innej spada do dna", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Linia", exact: true }).click();
+  await stroke(page, { x: 50, y: 400 }, { x: 910, y: 400 });
+  const shelf = await imageOf(page);
+  await page.getByRole("button", { name: "Żółty", exact: true }).click();
+  await page.getByRole("button", { name: "Piasek", exact: true }).click();
+  await holdSand(page, { x: 480, y: 120 });
+  const yellow = [244, 206, 84, 255];
+  const shelfRegion = { x: 400, y: 350, width: 160, height: 48 };
+  await expect
+    .poll(() => countColor(page, shelfRegion, yellow))
+    .toBeGreaterThan(30);
+  // Zapis kończy opadanie i obejmuje wszystkie ziarenka.
+  const file = await getDownload(page, "#save-project");
+  const settled = await imageOf(page);
+  expect(
+    await countColor(page, { x: 400, y: 100, width: 160, height: 230 }, yellow),
+  ).toBe(0);
+  expect(
+    await countColor(page, { x: 0, y: 410, width: 960, height: 230 }, yellow),
+  ).toBe(0);
+  await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+  await expect.poll(() => imageOf(page)).toBe(shelf);
+  await page.getByRole("button", { name: "Ponów", exact: true }).click();
+  await expect.poll(() => imageOf(page)).toBe(settled);
+  await page.getByRole("button", { name: "Nowy", exact: true }).click();
+  await page.locator("#file-input").setInputFiles(await file.path());
+  await expect.poll(() => imageOf(page)).toBe(settled);
+  await page
+    .getByRole("button", { name: "Dodaj warstwę", exact: true })
+    .click();
+  await holdSand(page, { x: 480, y: 120 });
+  await expect
+    .poll(() =>
+      countColor(page, { x: 400, y: 600, width: 160, height: 40 }, yellow),
+    )
+    .toBeGreaterThan(30);
+  await page
+    .getByRole("button", { name: "Ukryj: Warstwa 2", exact: true })
+    .click();
+  expect(await imageOf(page)).toBe(settled);
+});
+
+test("tryb snu chowa pracownię, blokuje skróty i zachowuje rysunek oraz historię", async ({
+  page,
+}) => {
+  await stroke(page);
+  const before = await imageOf(page);
+  await page.getByRole("button", { name: "Tryb ciemny", exact: true }).click();
+  await expect(page.locator("#app")).toBeHidden();
+  await expect(
+    page.getByAltText("Kotek śpi w łóżku pod różową kołdrą w gwiazdki."),
+  ).toBeVisible();
+  await expect(page.locator("#wake")).toBeFocused();
+  await page.keyboard.press("Control+z");
+  await page.keyboard.press("Tab");
+  expect(
+    await page.evaluate(() =>
+      document.querySelector("#app").contains(document.activeElement),
+    ),
+  ).toBe(false);
+  await page.locator("#wake").click();
+  await expect(page.locator("#app")).toBeVisible();
+  expect(await imageOf(page)).toBe(before);
+  await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+  await expect.poll(() => pixels(page)).toEqual([255, 255, 255, 255]);
+});
+
+test("piasek zatrzymuje się także na białych pikselach, a anulowanie dotyku kończy sypanie", async ({
+  page,
+}) => {
+  // Bezpośrednio sprawdzamy fizykę na małej kartce, również tuż przy jej brzegach.
+  const result = await page.evaluate(async () => {
+    const { createSand } = await import("/src/sand.js");
+    const canvas = document.createElement("canvas");
+    canvas.width = 60;
+    canvas.height = 80;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 50, 60, 1);
+    const sand = createSand(canvas);
+    for (let i = 0; i < 20; i++) {
+      sand.pour({ x: 30, y: 5 }, 20, "#ff0000");
+      sand.step();
+    }
+    sand.settle();
+    const data = ctx.getImageData(0, 0, 60, 80).data;
+    let above = 0,
+      below = 0,
+      floating = 0;
+    for (let y = 0; y < 80; y++) {
+      for (let x = 0; x < 60; x++) {
+        const index = (y * 60 + x) * 4;
+        if (data[index] === 255 && data[index + 1] === 0) {
+          if (y < 50) above++;
+          else below++;
+          if (y < 15) floating++;
+        }
+      }
+    }
+    return { above, below, floating };
+  });
+  expect(result.above).toBeGreaterThan(20);
+  expect(result.below).toBe(0);
+  expect(result.floating).toBe(0);
+  await page.getByRole("button", { name: "Piasek", exact: true }).click();
+  const canvas = page.locator("#drawing");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  await canvas.dispatchEvent("pointerdown", {
+    pointerId: 1,
+    pointerType: "touch",
+    button: 0,
+    clientX: box.x + 100,
+    clientY: box.y + 20,
+  });
+  await canvas.dispatchEvent("pointercancel", {
+    pointerId: 1,
+    pointerType: "touch",
+  });
+  await expect(
+    page.getByRole("button", { name: "Cofnij", exact: true }),
+  ).toBeEnabled();
+  const settled = await imageOf(page);
+  await page.waitForTimeout(150);
+  expect(await imageOf(page)).toBe(settled);
 });
