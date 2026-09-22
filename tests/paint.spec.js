@@ -42,8 +42,24 @@ async function getDownload(page, selector) {
   return promise;
 }
 
+// Stały projekt pozwala porównywać znane miejsca kresek i ziarenek piasku.
+// Rozmiar nowych kartek zależny od okna sprawdzamy osobno w paper-size.spec.js.
+async function openExampleProject(page) {
+  const data = await page.evaluate(async () => {
+    const { newProject, serialize } = await import("/src/project.js");
+    return serialize(newProject({ width: 960, height: 640 }));
+  });
+  await page.locator("#file-input").setInputFiles({
+    name: "przyklad.ala.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(data)),
+  });
+  await expect(page.locator("#dimensions")).toHaveText("960 × 640 px");
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  await openExampleProject(page);
 });
 
 test("rysowanie, cofanie i ponawianie zmieniają obraz", async ({ page }) => {
@@ -221,6 +237,7 @@ test("układ mieści się na telefonie, a dotyk rysuje", async ({
   });
   const tab = await mobile.newPage();
   await tab.goto("/");
+  await openExampleProject(tab);
   expect(
     await tab.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -731,6 +748,7 @@ test("dotyk rozciąga dodatek na telefonie, a przybornik mieści odmiany i wzory
   });
   const page = await mobile.newPage();
   await page.goto("/");
+  await openExampleProject(page);
   await page.getByRole("button", { name: "Uszy", exact: true }).click();
   await page.getByRole("button", { name: "Królicze", exact: true }).click();
   const blank = await imageOf(page);

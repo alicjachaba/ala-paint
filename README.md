@@ -58,7 +58,9 @@ Lokalne `npm run build` nadal używa względnych ścieżek (`base: "./"`). Ten s
 - Zapisywać i otwierać projekt `.ala.json`, pobierać obrazek PNG lub WebP.
 - Rysować myszą, palcem i rysikiem. Wielkość kreski ustawiamy suwakiem; nacisk rysika nie zmienia grubości.
 
-Kartka startowa ma **960 × 640 pikseli**. Skaluje się do ekranu, zachowując rozdzielczość obrazu. Pokazany procent to aktualna skala wyświetlania.
+**Nowa kartka bierze rozmiar i proporcje z dostępnego miejsca w pracowni.** Jej wielkość na ekranie wyznacza CSS względem obszaru roboczego, zamiast stałego rozmiaru 960 × 640. Na ekranie Retina rysunek dostaje więcej pikseli przy tej samej wielkości widocznej kartki i pędzla. Rozdzielczość jest ograniczona tak, aby pozostało miejsce na wszystkie 12 warstw. Pracownia wykorzystuje pełną szerokość okna, a przyborniki zachowują dotychczasowe szerokości.
+
+Rozmiar projektu ustalamy przy otwarciu pracowni i po wybraniu **Nowy**. Późniejsza zmiana wielkości okna dopasowuje tylko podgląd: zachowuje proporcje, piksele i warstwy istniejącego rysunku. Nową kartkę dopasowaną do innego okna utworzysz przyciskiem **Nowy**, po zapisaniu poprzedniej pracy. Wymiary pod kartką opisują rozdzielczość eksportu, a procent oznacza skalę względem początkowej wielkości kartki na ekranie (z uwzględnieniem gęstości).
 
 Czcionki korzystają z lokalnych fontów systemowych (Trebuchet MS, Comic Sans MS / Chalkboard SE, Georgia, Arial, Courier New) i zamienników. Ich wygląd może różnić się pomiędzy urządzeniami. Tekst staje się częścią obrazu aktywnej warstwy — można go cofnąć lub wymazać, ale nie edytować jak w edytorze tekstu.
 
@@ -110,13 +112,15 @@ Prosty JavaScript w modułach ES, HTML i CSS; Canvas 2D obsługuje rysowanie. [V
 - `assets/decorations.svg`, `assets/sleeping-cat.svg` — lokalne dekoracje i śpiąca maskotka.
 - `src/vendor/lucide.js` — lokalna kopia używanych ikon Lucide z licencją, gotowa dla przeglądarki.
 - `src/project.js` — warstwy, format projektu, sprawdzanie plików i eksport.
+- `src/paper-size.js` — rozmiar nowej kartki zależny od obszaru roboczego, gęstości ekranu i limitu pamięci.
 - `src/style.css` — kolory, rozmiary i układ na różnych ekranach.
-- `tests/paint.spec.js` — testy istotnych działań użytkownika.
+- `tests/paint.spec.js` — testy istotnych działań użytkownika na przykładowym projekcie.
+- `tests/paper-size.spec.js` — dopasowanie nowych kartek, ekrany Retina, rozdzielczość eksportu i zgodność projektów.
 - `tests/deployment.spec.js` — działanie źródeł na zwykłym serwerze pod `/` i `/ala-paint/`, bez Vite.
 - `AGENTS.md` — zasady dalszej współpracy.
 - `HISTORA.md` — historia zmian.
 
-Format projektu ma identyfikator `ala-paint` i wersję `1`; każda warstwa zawiera obraz PNG zapisany w base64. Import dopuszcza pliki do 20 MB, wymiary do 2048 × 2048 i łącznie do 20 milionów pikseli warstw. Plik jest sprawdzany przed zastąpieniem bieżącej pracy. Historia cofania nie jest zapisywana w pliku projektu.
+Format projektu ma identyfikator `ala-paint` i wersję `2`; zapisuje również `pixelRatio`, czyli przelicznik rozmiaru ekranowego na piksele obrazu. Każda warstwa zawiera obraz PNG zapisany w base64. Projekty wersji `1` nadal można otwierać; przy ponownym zapisie otrzymują wersję `2`. Import dopuszcza pliki do 20 MB, wymiary do 2048 × 2048 i łącznie do 20 milionów pikseli warstw. Plik jest sprawdzany przed zastąpieniem bieżącej pracy. Historia cofania nie jest zapisywana w pliku projektu.
 
 Ikony są przechowywane lokalnie, bez CDN. Przy zmianie wersji Lucide lub zestawu ikon w `scripts/icons-entry.js` uruchom `npm run icons:update` i zachowaj wynik w `src/vendor/` razem z licencją. Zwykłe zmiany aplikacji nie wymagają odświeżania tej kopii.
 
@@ -129,7 +133,7 @@ npm run build
 npm run format:check
 ```
 
-Testy obejmują rysowanie, cofanie, warstwy, gumkę, tekst, kształty, zapis i odczyt JSON, formaty eksportu, błędny import oraz dotyk na małym ekranie. Sprawdzają też stempelki, zmianę kolorów w tęczowej kresce, opadanie piasku, przeszkody tylko na tej samej warstwie, zapis ziarenek, przerwanie sypania oraz bezpieczny powrót z trybu snu. Nowe testy obejmują wszystkie odmiany dodatków, rozciąganie w obie strony, brak śladów podglądu, anulowanie gestu, przeciąganie dotykiem, wzory i tęczowe dodatki oraz układ z otwartymi odmianami przy szerokościach 320–1600 px. Są wykonywane w Chromium; pozostałe przeglądarki wymagają osobnej weryfikacji.
+Testy obejmują rysowanie, cofanie, warstwy, gumkę, tekst, kształty, zapis i odczyt JSON, formaty eksportu, błędny import oraz dotyk na małym ekranie. Sprawdzają też stempelki, zmianę kolorów w tęczowej kresce, opadanie piasku, przeszkody tylko na tej samej warstwie, zapis ziarenek, przerwanie sypania oraz bezpieczny powrót z trybu snu. Nowe testy obejmują wszystkie odmiany dodatków, rozciąganie w obie strony, brak śladów podglądu, anulowanie gestu, przeciąganie dotykiem, wzory i tęczowe dodatki oraz układ z otwartymi odmianami przy szerokościach 320–1600 px. Pełny zestaw jest wykonywany w Chromium. Testy rozmiaru kartki można dodatkowo uruchomić w silniku Safari: `npx playwright install webkit`, a następnie `npx playwright test tests/paper-size.spec.js --browser=webkit`.
 
 ## Kolejne przygody
 

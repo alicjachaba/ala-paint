@@ -2,6 +2,16 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-22 — Kartka dopasowana do obszaru roboczego i ekranów Retina
+
+- Usunęliśmy stałe 960 × 640 jako rozmiar nowych rysunków. Nowa kartka otrzymuje szerokość, wysokość i proporcje z dostępnego miejsca: CSS wyznacza obszar względnie, a JavaScript dobiera rozdzielczość z uwzględnieniem gęstości ekranu. Dzięki temu niskie okno nie zmniejsza kartki tylko po to, by zachować proporcje 3:2.
+- Pracownia korzysta z pełnej szerokości okna. Zachowaliśmy szerokości przyborników, napisy i przyciski. Nie dodaliśmy ręcznego powiększania ani przewijania kartki.
+- Rozdzielczość nowej kartki mieści się w dotychczasowych limitach importu i zostawia pamięć na 12 warstw. Pędzel, wielkość dodatków przy kliknięciu oraz tekst uwzględniają przelicznik gęstości. Procent pod kartką odnosi się do jej rozmiaru ekranowego.
+- Projekt JSON w wersji 2 zachowuje przelicznik `pixelRatio`, warstwy i tło. Czytamy również wersję 1. PNG i WebP zachowują rozdzielczość projektu. Zmiana wielkości okna nie zmienia istniejącego obrazu; przycisk **Nowy** tworzy kartkę dopasowaną do aktualnego miejsca, z dotychczasowym potwierdzeniem niezapisanej pracy.
+- Uzupełniliśmy README i dodaliśmy testy nowych rozmiarów. Dotychczasowe testy narzędzi pracują na wczytanym projekcie 960 × 640, aby nadal sprawdzać znane położenia kresek, warstw i ziarenek piasku.
+
+Sprawdzenie: `npm test` — 40 testów Chromium; `npx playwright test tests/paper-size.spec.js --browser=webkit` — 5 testów silnika Safari. Nowe testy obejmują gęstości 1 i 2, różne proporcje okna, dotyk, grubość kreski, cofanie, warstwy, zapis/odczyt, PNG/WebP (w WebKit komunikat o braku kodowania WebP), stary format i limit 12 warstw na dużym ekranie Retina. `npm run build`, `npm run format:check` i `git diff --check` — poprawne. Obejrzeliśmy zrzut nowej kartki w WebKit przy oknie 1408 × 650 i podwójnej gęstości pikseli.
+
 ## 2026-09-22 — GitHub Pages bezpośrednio z main i katalogu głównego
 
 - Aplikacja działa bezpośrednio ze źródeł, bez Vite podczas publikacji. W GitHub Pages wybieramy **Deploy from a branch → main → /(root)**. Dodaliśmy `.nojekyll`; własny workflow i katalog gotowej strony w repozytorium nie są potrzebne.

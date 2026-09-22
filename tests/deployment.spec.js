@@ -73,7 +73,14 @@ for (const prefix of ["/", "/ala-paint/"]) {
       await page.mouse.up();
       const pixel = () =>
         canvas.evaluate((element) => [
-          ...element.getContext("2d").getImageData(480, 320, 1, 1).data,
+          ...element
+            .getContext("2d")
+            .getImageData(
+              Math.floor(element.width / 2),
+              Math.floor(element.height / 2),
+              1,
+              1,
+            ).data,
         ]);
       expect(await pixel()).toEqual([118, 85, 206, 255]);
       await page.getByRole("button", { name: "Cofnij", exact: true }).click();

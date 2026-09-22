@@ -2,9 +2,11 @@ import { BACKGROUNDS, paintBackground } from "./backgrounds.js";
 export { BACKGROUNDS, paintBackground } from "./backgrounds.js";
 
 // Projekt przechowuje osobny, przezroczysty obraz dla każdej warstwy.
-export const PROJECT_VERSION = 1;
+export const PROJECT_VERSION = 2;
 export const MAX_LAYERS = 12;
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
+export const MAX_DIMENSION = 2048;
+export const MAX_LAYER_PIXELS = 20_000_000;
 export const FONTS = [
   { name: "Przyjazna", family: '"Trebuchet MS", Arial, sans-serif' },
   { name: "Komiksowa", family: '"Comic Sans MS", "Chalkboard SE", cursive' },
@@ -29,14 +31,13 @@ export function makeLayer(width, height, name = "Warstwa 1") {
   };
 }
 
-export function newProject() {
-  const width = 960;
-  const height = 640;
+export function newProject({ width, height, pixelRatio = 1 }) {
   const layer = makeLayer(width, height);
   return {
     name: "Mój pierwszy rysunek",
     width,
     height,
+    pixelRatio,
     background: "white",
     layers: [layer],
     activeLayerId: layer.id,
@@ -50,6 +51,7 @@ export function serialize(project) {
     name: project.name,
     width: project.width,
     height: project.height,
+    pixelRatio: project.pixelRatio,
     background: project.background,
     activeLayerId: project.activeLayerId,
     layers: project.layers.map(({ id, name, visible, canvas }) => ({
@@ -67,15 +69,21 @@ export async function deserialize(data) {
       "Ten plik nie jest poprawnym projektem Ala Paint. Wybierz plik .json zapisany w naszej pracowni.",
     );
   };
-  if (!data || data.format !== "ala-paint" || data.version !== PROJECT_VERSION)
+  if (
+    !data ||
+    data.format !== "ala-paint" ||
+    ![1, PROJECT_VERSION].includes(data.version)
+  )
     fail();
+  const pixelRatio = data.version === 1 ? 1 : data.pixelRatio;
+  if (!Number.isFinite(pixelRatio) || pixelRatio <= 0 || pixelRatio > 4) fail();
   if (
     !Number.isInteger(data.width) ||
     !Number.isInteger(data.height) ||
     data.width < 1 ||
     data.height < 1 ||
-    data.width > 2048 ||
-    data.height > 2048
+    data.width > MAX_DIMENSION ||
+    data.height > MAX_DIMENSION
   )
     fail();
   if (
@@ -89,7 +97,7 @@ export async function deserialize(data) {
     !Array.isArray(data.layers) ||
     data.layers.length < 1 ||
     data.layers.length > MAX_LAYERS ||
-    data.width * data.height * data.layers.length > 20_000_000
+    data.width * data.height * data.layers.length > MAX_LAYER_PIXELS
   )
     fail();
   const ids = new Set();
@@ -159,6 +167,7 @@ export async function deserialize(data) {
     name: data.name,
     width: data.width,
     height: data.height,
+    pixelRatio,
     background: data.background,
     activeLayerId: data.activeLayerId,
     layers,

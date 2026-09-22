@@ -1791,6 +1791,20 @@ footer {
   padding-top: 0;
 }
 
+/* Dostępne miejsce wyznacza rozmiar nowej kartki, bez stałych proporcji 960 × 640. */
+.paper-space {
+  width: 100%;
+  height: clamp(18rem, 60svh, 40rem);
+  min-height: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+.paper {
+  width: min(100cqw, calc(100cqh * var(--paper-ratio, 1.5)));
+  aspect-ratio: var(--paper-ratio, 1.5);
+}
+
 @media (min-width: 901px) {
   /* Nagłówek i stopka zajmują tyle, ile potrzebują; panele dzielą resztę okna. */
   #app {
@@ -1800,7 +1814,7 @@ footer {
   }
   .workspace {
     width: 100%;
-    max-width: 1920px;
+    max-width: none;
     min-height: 0;
     grid-template-columns: 195px minmax(0, 1fr) 280px;
     padding-top: 18px;
@@ -1833,6 +1847,7 @@ footer {
     margin-bottom: 16px;
   }
   .canvas-surround {
+    flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -1847,15 +1862,9 @@ footer {
     flex-wrap: wrap;
     padding: 6px 0;
   }
-  .paper {
-    min-height: 0;
-    max-width: 100%;
-    aspect-ratio: var(--paper-ratio, 1.5);
-  }
-  #drawing {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+  .paper-space {
+    flex: 1;
+    height: auto;
   }
   .encouragement {
     flex-shrink: 0;
