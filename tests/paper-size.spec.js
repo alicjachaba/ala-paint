@@ -52,11 +52,12 @@ for (const density of [1, 2]) {
       await expect(page.locator("#drawing")).toBeVisible();
       const size = await layout(page);
       expectFilledSpace(size);
-      expect(size.width).toBeGreaterThan(510);
+      expect(Math.abs(size.width - 1408 * 0.6)).toBeLessThan(2);
+      expect(Math.abs(size.height - 650 * 0.6)).toBeLessThan(2);
       expect(size.imageWidth).toBe(Math.floor(size.spaceWidth * density));
       expect(size.imageHeight).toBe(Math.floor(size.spaceHeight * density));
       expect(size.pageWidth).toBe(1408);
-      expect(size.pageHeight).toBe(650);
+      expect(size.pageHeight).toBeGreaterThanOrEqual(650);
       await expect(page.locator("#zoom")).toHaveText("100%");
       const blank = await imageOf(page);
       const canvas = page.locator("#drawing");
@@ -184,7 +185,12 @@ test("nowe kartki mają proporcje miejsca na telefonie, laptopie i dużym ekrani
     const size = await layout(page);
     expectFilledSpace(size);
     expect(size.pageWidth).toBe(width);
-    if (width > 900) expect(size.pageHeight).toBe(height);
+    if (width > 900) {
+      const fraction = width < 1200 ? 0.5 : 0.6;
+      // Sprawdzamy rozmiar względem okna, nie tylko wypełnienie kontenera.
+      expect(Math.abs(size.width - width * fraction)).toBeLessThan(2);
+      expect(Math.abs(size.height - height * 0.6)).toBeLessThan(2);
+    }
   }
 });
 

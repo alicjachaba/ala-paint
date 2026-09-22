@@ -779,7 +779,9 @@ test("przybornik mieści do czterech kolumn i nie rozpycha ekranu z otwartymi od
   page,
 }) => {
   await page.getByRole("button", { name: "Oczy", exact: true }).click();
-  for (const width of [320, 390, 620, 768, 900, 1024, 1100, 1280, 1440, 1600]) {
+  for (const width of [
+    320, 390, 620, 768, 900, 1024, 1100, 1280, 1440, 1600, 1920, 2560,
+  ]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
       await page.evaluate(
@@ -794,8 +796,8 @@ test("przybornik mieści do czterech kolumn i nie rozpycha ekranu z otwartymi od
       );
     expect(columns).toBeGreaterThanOrEqual(2);
     expect(columns).toBeLessThanOrEqual(4);
-    if (width >= 1400) expect(columns).toBe(4);
-    if (width === 1280) expect(columns).toBe(3);
+    if (width === 2560) expect(columns).toBe(4);
+    if (width === 1920) expect(columns).toBe(3);
   }
 });
 
@@ -978,7 +980,7 @@ for (const [name, id] of [
   });
 }
 
-test("oba panele mieszczą się w oknie bez przewijania całej strony na komputerze", async ({
+test("panele przewijają się niezależnie, a strona zachowuje szerokość okna", async ({
   page,
 }) => {
   await page.getByRole("button", { name: "Oczy", exact: true }).click();
@@ -1012,12 +1014,10 @@ test("oba panele mieszczą się w oknie bez przewijania całej strony na kompute
       };
     });
     expect(layout.width).toBe(width);
-    expect(layout.height).toBe(height);
+    expect(layout.height).toBeGreaterThanOrEqual(height);
     expect(layout.ratio).toBeCloseTo(1.5, 2);
-    if (width >= 1400) {
-      expect(layout.panels[0].width).toBeGreaterThanOrEqual(400);
-      expect(layout.panels[1].width).toBeGreaterThanOrEqual(340);
-    }
+    expect(layout.panels[0].width).toBeGreaterThanOrEqual(192);
+    expect(layout.panels[1].width).toBeGreaterThanOrEqual(208);
     for (const panel of layout.panels) {
       expect(panel.top).toBeGreaterThan(0);
       expect(panel.bottom).toBeLessThan(height);
