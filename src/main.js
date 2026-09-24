@@ -1,5 +1,13 @@
 import {
   createIcons,
+  PencilLine,
+  Heart,
+  Smile,
+  Cat,
+  Fish,
+  Feather,
+  Crown,
+  Shell,
   Paintbrush,
   PaintBucket,
   Pencil,
@@ -41,6 +49,7 @@ import {
   MAX_LAYERS,
   MAX_FILE_BYTES,
   MAX_LAYER_PIXELS,
+  makeCanvas,
   makeLayer,
   newProject,
   serialize,
@@ -54,18 +63,30 @@ import { fillArea } from "./fill.js";
 import { backgroundPreview } from "./backgrounds.js";
 import { canvasPoint, drawStroke, drawShape } from "./drawing.js";
 import { paperSize } from "./paper-size.js";
+import { createStampFeedback } from "./stamp-feedback.js";
 
 import {
   STAMPS,
   STAMP_VARIANTS,
   drawStamp,
   drawStampGesture,
+  stampFromGesture,
+  containsStamp,
 } from "./stamps.js";
 import { PATTERNS, patternInfo, patternTile } from "./patterns.js";
+import { createMarker } from "./marker.js";
 import { createSand } from "./sand.js";
 import { nextColor, shapeColor } from "./colors.js";
 
 const iconSet = {
+  PencilLine,
+  Heart,
+  Smile,
+  Cat,
+  Fish,
+  Feather,
+  Crown,
+  Shell,
   Paintbrush,
   PaintBucket,
   Pencil,
@@ -121,6 +142,7 @@ const colors = [
 const toolsList = [
   ["brush", "Pędzel", "paintbrush"],
   ["pencil", "Ołówek", "pencil"],
+  ["marker", "Flamaster", "pencil-line"],
   ["spray", "Spray", "spray-can"],
   ["fill", "Wypełnij", "paint-bucket"],
   ["eraser", "Gumka", "eraser"],
@@ -145,12 +167,16 @@ let savedSnapshot;
 let dirty = false;
 let busy = false;
 let gesture = null;
+let editableStamp = null;
+let stampTimer;
+let stampFrame;
+const STAMP_EDIT_MS = 1000;
 let toastTimer;
 let sandFrame;
 let sleeping = false;
 const stampTools = STAMPS.map(([id]) => id);
 const shapes = ["line", "circle", "rectangle"];
-const previewTools = [...shapes, ...stampTools];
+const previewTools = [...shapes, ...stampTools, "marker"];
 const chosenVariants = Object.fromEntries(
   Object.entries(STAMP_VARIANTS).map(([tool, variants]) => [
     tool,
@@ -183,8 +209,8 @@ app.innerHTML = `
       <section class="control-section"><div class="section-heading"><h2>Zwierzątka Ali</h2>${icon("paw-print")}</div>
         <div class="tool-grid stamp-grid">${STAMPS.map(([id, label, symbol]) => `<button class="tool" data-tool="${id}" aria-pressed="false">${icon(symbol)}<span>${label}</span></button>`).join("")}</div>
         <div id="stamp-controls" hidden>
+          <p class="section-description">Przytrzymaj dodatek i przesuń. Trzymając lewy przycisk myszy, kręć kółkiem, aby obrócić.</p>
           <div id="stamp-variants" class="variant-grid" role="group" aria-label="Odmiany zwierzątek"></div>
-          <label for="stamp-rotation">Obrót <output id="stamp-rotation-value">0°</output></label><input id="stamp-rotation" type="range" min="-180" max="180" step="15" value="0">
           <p class="hint">Naciśnij i przeciągnij, aby wybrać wielkość dodatku. Możesz też kliknąć, aby przybić stempelek.</p>
         </div>
       </section>
@@ -234,6 +260,7 @@ document.body.append(sleepScreen);
 const $ = (selector) => document.querySelector(selector);
 const canvas = $("#drawing");
 const context = canvas.getContext("2d");
+const stampFeedback = createStampFeedback(canvas);
 const previewCanvas = document.createElement("canvas");
 const previewContext = previewCanvas.getContext("2d");
 const activeLayer = () =>
@@ -266,6 +293,14 @@ function confirmAction(title, message, button = "Tak, zaczynamy") {
 }
 
 function drawPreview(target) {
+  if (gesture.marker) {
+    gesture.marker.draw(target);
+    return;
+  }
+  if (gesture.stamp) {
+    drawStamp(target, gesture.stamp, gesture.stamp);
+    return;
+  }
   const draw = stampTools.includes(gesture.settings.tool)
     ? drawStampGesture
     : drawShape;
@@ -288,7 +323,11 @@ function renderCanvas() {
       if (previewCanvas.height !== canvas.height)
         previewCanvas.height = canvas.height;
       previewContext.clearRect(0, 0, canvas.width, canvas.height);
-      previewContext.drawImage(layer.canvas, 0, 0);
+      previewContext.drawImage(
+        gesture.stamp ? editableStamp.base : layer.canvas,
+        0,
+        0,
+      );
       drawPreview(previewContext);
       context.drawImage(previewCanvas, 0, 0);
     } else {
@@ -297,6 +336,25 @@ function renderCanvas() {
     if (gesture?.sand && layer.id === gesture.layer.id)
       gesture.sand.draw(context);
   });
+  renderStampFeedback();
+}
+
+function renderStampFeedback() {
+  if (!editableStamp) return;
+  const remaining = Math.max(0, editableStamp.expires - performance.now());
+  const opacity = gesture?.stamp ? 0.7 : 1 - (0.3 * remaining) / STAMP_EDIT_MS;
+  stampFeedback.show(
+    project,
+    editableStamp,
+    gesture?.stamp || editableStamp.stamp,
+    opacity,
+  );
+}
+
+function animateStampFeedback() {
+  if (!editableStamp || gesture?.stamp) return;
+  renderStampFeedback();
+  stampFrame = requestAnimationFrame(animateStampFeedback);
 }
 
 function updateHistory() {
@@ -395,7 +453,9 @@ function updateHint() {
       : settings.tool === "sand"
         ? "Przytrzymaj, aby sypać. Piasek zatrzyma się na kreskach tej warstwy."
         : stampTools.includes(settings.tool)
-          ? "Naciśnij i przeciągnij, aby narysować zwierzęcy dodatek"
+          ? editableStamp
+            ? "Złap dodatek, aby go przesunąć. Trzymaj przycisk i kręć kółkiem, aby obrócić."
+            : "Przeciągnij, aby dodać część zwierzątka."
           : settings.tool === "text"
             ? "Wpisz tekst w przyborniku i kliknij na kartce"
             : shapes.includes(settings.tool)
@@ -404,6 +464,7 @@ function updateHint() {
 }
 
 function renderAll() {
+  finishStampEditing();
   $(".paper").style.setProperty(
     "--paper-ratio",
     project.width / project.height,
@@ -488,6 +549,7 @@ document.querySelectorAll("[data-pattern-preview]").forEach((preview) => {
 document.querySelectorAll("[data-tool]").forEach(
   (button) =>
     (button.onclick = () => {
+      if (editableStamp && !gesture) finishStampEditing();
       settings.tool = button.dataset.tool;
       document.querySelectorAll("[data-tool]").forEach((item) => {
         item.classList.toggle("selected", item === button);
@@ -504,10 +566,6 @@ document.querySelectorAll("[data-tool]").forEach(
 document
   .querySelectorAll("[data-color]")
   .forEach((button) => (button.onclick = () => setColor(button.dataset.color)));
-$("#stamp-rotation").oninput = (event) => {
-  settings.rotation = Number(event.target.value);
-  $("#stamp-rotation-value").value = `${settings.rotation}°`;
-};
 $("#custom-color").oninput = (event) => setColor(event.target.value);
 $("#brush-size").oninput = (event) => {
   settings.size = Number(event.target.value);
@@ -536,6 +594,42 @@ $("#project-name").onchange = (event) => {
   });
 };
 
+// Obraz warstwy zawiera już dodatek. Kopię spod niego trzymamy tylko na czas poprawki.
+function finishStampEditing() {
+  clearTimeout(stampTimer);
+  cancelAnimationFrame(stampFrame);
+  stampFeedback.hide();
+  editableStamp = null;
+  canvas.style.cursor = settings.tool === "text" ? "text" : "crosshair";
+  updateHint();
+}
+
+function allowStampEditing(stamp, layer, base) {
+  clearTimeout(stampTimer);
+  cancelAnimationFrame(stampFrame);
+  editableStamp = {
+    stamp,
+    layer,
+    base,
+    expires: performance.now() + STAMP_EDIT_MS,
+  };
+  stampTimer = setTimeout(finishStampEditing, STAMP_EDIT_MS);
+  animateStampFeedback();
+  canvas.style.cursor = "grab";
+  updateHint();
+}
+
+function canGrabStamp(point) {
+  return (
+    editableStamp &&
+    performance.now() < editableStamp.expires &&
+    editableStamp.layer === activeLayer() &&
+    activeLayer().visible &&
+    stampTools.includes(settings.tool) &&
+    containsStamp(editableStamp.stamp, point)
+  );
+}
+
 canvas.addEventListener("pointerdown", (event) => {
   if (gesture?.sand && !gesture.pouring) finishSand();
   if (sleeping || busy || gesture || event.button !== 0) return;
@@ -547,10 +641,32 @@ canvas.addEventListener("pointerdown", (event) => {
   const point = canvasPoint(event, canvas);
   const layer = activeLayer();
   const before = snapshot();
+  if (canGrabStamp(point)) {
+    clearTimeout(stampTimer);
+    cancelAnimationFrame(stampFrame);
+    gesture = {
+      pointerId: event.pointerId,
+      pointerType: event.pointerType,
+      start: point,
+      last: point,
+      before,
+      layer,
+      stamp: { ...editableStamp.stamp },
+      settings: { ...settings, tool: editableStamp.stamp.tool },
+    };
+    canvas.setPointerCapture(event.pointerId);
+    canvas.style.cursor = "grabbing";
+    renderStampFeedback();
+    return;
+  }
+  finishStampEditing();
   const drawingSettings = {
     ...settings,
     size: settings.size * project.pixelRatio,
     stampSize: settings.stampSize * project.pixelRatio,
+    // Tolerancję drgnięcia mierzymy na ekranie, także po zmniejszeniu kartki i na Retina.
+    stampClickDistance:
+      (12 * canvas.width) / canvas.getBoundingClientRect().width,
     variant: chosenVariants[settings.tool],
   };
   if (settings.tool === "fill") {
@@ -587,6 +703,7 @@ canvas.addEventListener("pointerdown", (event) => {
   }
   gesture = {
     pointerId: event.pointerId,
+    pointerType: event.pointerType,
     start: point,
     last: point,
     before,
@@ -594,7 +711,14 @@ canvas.addEventListener("pointerdown", (event) => {
     settings: drawingSettings,
   };
   canvas.setPointerCapture(event.pointerId);
-  if (settings.tool === "sand") {
+  if (settings.tool === "marker") {
+    gesture.marker = createMarker(
+      project.width,
+      project.height,
+      gesture.settings,
+    );
+    gesture.marker.add(point, point);
+  } else if (settings.tool === "sand") {
     gesture.sand = createSand(layer.canvas);
     gesture.pouring = true;
     gesture.lastFrame = performance.now();
@@ -604,11 +728,22 @@ canvas.addEventListener("pointerdown", (event) => {
     drawStroke(layer.canvas.getContext("2d"), point, point, gesture.settings);
   renderCanvas();
 });
-canvas.addEventListener("pointermove", (event) => {
-  if (!gesture || event.pointerId !== gesture.pointerId) return;
+window.addEventListener("pointermove", (event) => {
+  if (!gesture) {
+    if (event.target !== canvas) return;
+    canvas.style.cursor = canGrabStamp(canvasPoint(event, canvas))
+      ? "grab"
+      : settings.tool === "text"
+        ? "text"
+        : "crosshair";
+    return;
+  }
+  if (event.pointerId !== gesture.pointerId) return;
   const samples = event.getCoalescedEvents?.();
   for (const sample of samples?.length ? samples : [event]) {
     const point = canvasPoint(sample, canvas);
+    if (gesture.stamp) moveStamp(point);
+    if (gesture.marker) gesture.marker.add(gesture.last, point);
     if (!gesture.sand && !previewTools.includes(gesture.settings.tool))
       drawStroke(
         gesture.layer.canvas.getContext("2d"),
@@ -620,6 +755,32 @@ canvas.addEventListener("pointermove", (event) => {
   }
   renderCanvas();
 });
+
+function moveStamp(point) {
+  gesture.stamp.x = editableStamp.stamp.x + point.x - gesture.start.x;
+  gesture.stamp.y = editableStamp.stamp.y + point.y - gesture.start.y;
+}
+
+canvas.addEventListener(
+  "wheel",
+  (event) => {
+    if (
+      !gesture ||
+      gesture.pointerType !== "mouse" ||
+      !stampTools.includes(gesture.settings.tool) ||
+      !event.deltaY ||
+      event.ctrlKey
+    )
+      return;
+    event.preventDefault();
+    const target = gesture.stamp || gesture.settings;
+    target.rotation =
+      ((target.rotation + Math.sign(event.deltaY) * 15 + 540) % 360) - 180;
+    renderCanvas();
+  },
+  { passive: false },
+);
+
 function finishGesture(event) {
   if (!gesture || event.pointerId !== gesture.pointerId) return;
   if (gesture.sand) {
@@ -630,6 +791,8 @@ function finishGesture(event) {
   }
   if (event.type === "pointerup") {
     const point = canvasPoint(event, canvas);
+    if (gesture.stamp) moveStamp(point);
+    if (gesture.marker) gesture.marker.add(gesture.last, point);
     if (!gesture.sand && !previewTools.includes(gesture.settings.tool))
       drawStroke(
         gesture.layer.canvas.getContext("2d"),
@@ -639,9 +802,25 @@ function finishGesture(event) {
       );
     gesture.last = point;
   }
+  let placedStamp;
+  let base;
+  const layer = gesture.layer;
   if (
+    stampTools.includes(gesture.settings.tool) &&
+    event.type === "pointerup"
+  ) {
+    placedStamp =
+      gesture.stamp ||
+      stampFromGesture(gesture.start, gesture.last, gesture.settings);
+    base = editableStamp?.base || makeCanvas(project.width, project.height);
+    if (!gesture.stamp) base.getContext("2d").drawImage(layer.canvas, 0, 0);
+    const target = layer.canvas.getContext("2d");
+    target.clearRect(0, 0, project.width, project.height);
+    target.drawImage(base, 0, 0);
+    drawStamp(target, placedStamp, placedStamp);
+  } else if (
     previewTools.includes(gesture.settings.tool) &&
-    (event.type === "pointerup" || !stampTools.includes(gesture.settings.tool))
+    !stampTools.includes(gesture.settings.tool)
   )
     drawPreview(gesture.layer.canvas.getContext("2d"));
   settings.hue = gesture.settings.hue;
@@ -651,11 +830,14 @@ function finishGesture(event) {
   if (canvas.hasPointerCapture(pointerId))
     canvas.releasePointerCapture(pointerId);
   commit(before);
+  if (placedStamp) allowStampEditing(placedStamp, layer, base);
+  else if (editableStamp) finishStampEditing();
   renderCanvas();
 }
-canvas.addEventListener("pointerup", finishGesture);
-canvas.addEventListener("pointercancel", finishGesture);
-canvas.addEventListener("lostpointercapture", finishGesture);
+// Utrata przechwycenia nie oznacza anulowania: mysz może nadal rysować.
+// Słuchamy całego okna, aby odebrać ruch i puszczenie także poza kartką.
+window.addEventListener("pointerup", finishGesture);
+window.addEventListener("pointercancel", finishGesture);
 
 // Po puszczeniu ziarenka jeszcze spadają. Kolejna czynność najpierw je osadza.
 function animateSand(time) {
@@ -692,6 +874,8 @@ function finishSand() {
 document.addEventListener(
   "pointerdown",
   (event) => {
+    if (event.target !== canvas && editableStamp && !gesture?.stamp)
+      finishStampEditing();
     if (event.target !== canvas && gesture?.sand) finishSand();
   },
   true,
@@ -706,9 +890,13 @@ document.addEventListener(
 window.addEventListener("blur", () => {
   if (gesture?.sand) finishSand();
   else if (gesture) finishGesture({ pointerId: gesture.pointerId });
+  finishStampEditing();
 });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && gesture?.sand) finishSand();
+  if (document.hidden && gesture?.stamp)
+    finishGesture({ pointerId: gesture.pointerId });
+  if (document.hidden) finishStampEditing();
 });
 $("#sleep").onclick = () => {
   if (busy) return;
@@ -733,6 +921,7 @@ $("#wake").onclick = () => {
 
 async function travelHistory(direction) {
   if (busy || gesture) return;
+  finishStampEditing();
   const from = direction === "undo" ? past : future;
   const to = direction === "undo" ? future : past;
   if (!from.length) return;
@@ -802,6 +991,9 @@ document.addEventListener("click", (event) => {
 });
 document.addEventListener("keydown", (event) => {
   if (sleeping) return;
+  if (event.key === "Escape" && gesture?.stamp) {
+    finishGesture({ pointerId: gesture.pointerId });
+  }
   if (
     (event.ctrlKey || event.metaKey) &&
     ["z", "y", "s"].includes(event.key.toLowerCase())
@@ -826,6 +1018,7 @@ document.addEventListener("keydown", (event) => {
 });
 function saveProject() {
   if (busy || gesture) return;
+  finishStampEditing();
   const data = snapshot();
   download(
     new Blob([data], { type: "application/json" }),

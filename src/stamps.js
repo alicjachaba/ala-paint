@@ -1,3 +1,4 @@
+import { drawAnimalPart } from "./animal-parts.js";
 import { shapeColor } from "./colors.js";
 
 export const STAMPS = [
@@ -5,6 +6,14 @@ export const STAMPS = [
   ["tail", "Ogon", "squirrel"],
   ["ears", "Uszy", "ear"],
   ["paws", "Łapy", "paw-print"],
+  ["nose", "Noski", "heart"],
+  ["muzzle", "Pyszczki", "smile"],
+  ["whiskers", "Wąsy", "cat"],
+  ["horns", "Rogi", "crown"],
+  ["wings", "Skrzydła", "feather"],
+  ["fins", "Płetwy", "fish"],
+  ["mane", "Grzywy", "sun"],
+  ["belly", "Brzuszki", "shell"],
 ];
 export const STAMP_VARIANTS = {
   eyes: [
@@ -12,49 +21,134 @@ export const STAMP_VARIANTS = {
     ["cat", "Kocie"],
     ["lashes", "Z rzęsami"],
     ["sleepy", "Śpiące"],
+    ["hearts", "Serduszka"],
+    ["stars", "Gwiazdki"],
   ],
   tail: [
     ["curly", "Zakręcony"],
     ["fox", "Lisi"],
     ["squirrel", "Wiewiórki"],
     ["bunny", "Króliczy"],
+    ["lion", "Lwi"],
+    ["beaver", "Bobrzy"],
   ],
   ears: [
     ["cat", "Kocie"],
     ["bunny", "Królicze"],
     ["bear", "Misiowe"],
     ["dog", "Pieska"],
+    ["mouse", "Mysie"],
+    ["lynx", "Rysia"],
   ],
   paws: [
     ["cat", "Kocie"],
     ["dog", "Pieska"],
     ["bird", "Ptasie"],
     ["hoof", "Kopytka"],
+    ["frog", "Żabie"],
+    ["bear", "Niedźwiedzie"],
+  ],
+  nose: [
+    ["triangle", "Trójkątny"],
+    ["heart", "Serduszko"],
+    ["dog", "Psi"],
+    ["pig", "Ryjek"],
+    ["bunny", "Króliczy nosek"],
+    ["beak", "Dziobek"],
+  ],
+  muzzle: [
+    ["cat", "Koci pyszczek"],
+    ["dog", "Psi pyszczek"],
+    ["bunny", "Króliczy pyszczek"],
+    ["bear", "Misiowy pyszczek"],
+    ["frog", "Żabi uśmiech"],
+    ["lion", "Lwi pyszczek"],
+  ],
+  whiskers: [
+    ["straight", "Proste"],
+    ["curved", "Wygięte"],
+    ["long", "Długie"],
+    ["short", "Krótkie"],
+    ["curly", "Zawijane"],
+    ["dots", "Z piegami"],
+  ],
+  horns: [
+    ["goat", "Kozie"],
+    ["bull", "Bycze"],
+    ["deer", "Jelenia"],
+    ["ram", "Baranie"],
+    ["unicorn", "Jednorożca"],
+    ["giraffe", "Żyrafie różki"],
+  ],
+  wings: [
+    ["bird", "Ptasie skrzydła"],
+    ["butterfly", "Motyla"],
+    ["bat", "Nietoperza"],
+    ["dragon", "Smocze"],
+    ["bee", "Pszczele"],
+    ["angel", "Pierzaste"],
+  ],
+  fins: [
+    ["shark", "Rekina"],
+    ["fish", "Rybie"],
+    ["dolphin", "Delfina"],
+    ["goldfish", "Złotej rybki"],
+    ["seal", "Foki"],
+    ["whale", "Wieloryba"],
+  ],
+  mane: [
+    ["lion", "Lwia"],
+    ["horse", "Końska"],
+    ["zebra", "Zebry"],
+    ["fluffy", "Puszysta"],
+    ["spiky", "Kolczasta"],
+    ["ruff", "Kryza"],
+  ],
+  belly: [
+    ["oval", "Owalny"],
+    ["heart", "Serduszkowy"],
+    ["striped", "W paseczki"],
+    ["spotted", "W kropeczki"],
+    ["shell", "Żółwia skorupa"],
+    ["fluffy", "Puchaty"],
   ],
 };
 
 // Przeciągnięcie wyznacza ramkę, tak samo jak dla koła i prostokąta.
-// Samo kliknięcie nadal pozwala przybić dodatek w stałym rozmiarze 100 pikseli.
+// Kliknięcie lub lekkie drgnięcie dłoni przybija dodatek w domyślnym rozmiarze.
 export function drawStampGesture(context, start, end, settings) {
-  const clicked = Math.hypot(end.x - start.x, end.y - start.y) < 4;
-  drawStamp(
-    context,
-    clicked
-      ? start
-      : {
-          x: (start.x + end.x) / 2,
-          y: (start.y + end.y) / 2,
-        },
-    {
-      ...settings,
-      width: clicked
-        ? settings.stampSize
-        : Math.max(8, Math.abs(end.x - start.x)),
-      height: clicked
-        ? settings.stampSize
-        : Math.max(8, Math.abs(end.y - start.y)),
-    },
-  );
+  const stamp = stampFromGesture(start, end, settings);
+  drawStamp(context, stamp, stamp);
+}
+
+export function stampFromGesture(start, end, settings) {
+  const clicked =
+    Math.hypot(end.x - start.x, end.y - start.y) <=
+    (settings.stampClickDistance ?? 12);
+  return {
+    tool: settings.tool,
+    variant: settings.variant,
+    color: settings.color,
+    rotation: settings.rotation,
+    x: clicked ? start.x : (start.x + end.x) / 2,
+    y: clicked ? start.y : (start.y + end.y) / 2,
+    width: clicked
+      ? settings.stampSize
+      : Math.max(8, Math.abs(end.x - start.x)),
+    height: clicked
+      ? settings.stampSize
+      : Math.max(8, Math.abs(end.y - start.y)),
+  };
+}
+
+// Cofamy obrót punktu, aby można było złapać także obrócony dodatek.
+export function containsStamp(stamp, point) {
+  const angle = (-stamp.rotation * Math.PI) / 180;
+  const dx = point.x - stamp.x;
+  const dy = point.y - stamp.y;
+  const x = dx * Math.cos(angle) - dy * Math.sin(angle);
+  const y = dx * Math.sin(angle) + dy * Math.cos(angle);
+  return Math.abs(x) <= stamp.width / 2 && Math.abs(y) <= stamp.height / 2;
 }
 
 // Każdy dodatek mieści się w umownej ramce 100 × 100 wokół środka.
@@ -114,6 +208,17 @@ export function drawStamp(
           "#fff",
         );
       } else oval(x, 0, 21, 29, "#fff");
+      if (variant === "hearts" || variant === "stars") {
+        context.save();
+        context.translate(x, 0);
+        path(
+          variant === "hearts"
+            ? "M 0 17 C -32 -1 -13 -23 0 -9 C 13 -23 32 -1 0 17 Z"
+            : "M 0 -20 L 6 -6 L 20 -5 L 10 5 L 13 20 L 0 12 L -13 20 L -10 5 L -20 -5 L -6 -6 Z",
+        );
+        context.restore();
+        continue;
+      }
       oval(x + 3, 3, 10, variant === "cat" ? 13 : 16, color);
       oval(x + 4, 4, variant === "cat" ? 2.5 : 4, 9, "#49334b");
       context.fillStyle = "#fff";
@@ -129,7 +234,14 @@ export function drawStamp(
     for (const direction of [-1, 1]) {
       context.save();
       context.scale(direction, 1);
-      if (variant === "bunny") {
+      if (variant === "mouse") {
+        oval(26, 0, 21, 30, color);
+        oval(26, 0, 14, 21, "#ffc5d9");
+      } else if (variant === "lynx") {
+        path("M 7 32 L 15 -14 L 34 -32 L 45 32 Z");
+        path("M 18 22 L 32 -15 L 36 22 Z", "#ffc5d9");
+        line("M 34 -31 L 29 -47 M 34 -31 L 37 -46 M 34 -31 L 43 -42");
+      } else if (variant === "bunny") {
         oval(25, 0, 16, 44, color);
         oval(25, -2, 7, 31, "#ffc5d9");
       } else if (variant === "bear") {
@@ -145,7 +257,15 @@ export function drawStamp(
       context.restore();
     }
   } else if (tool === "tail") {
-    if (variant === "fox") {
+    if (variant === "lion") {
+      path("M -40 36 Q 18 43 17 -28 L 28 -28 Q 35 49 -39 46 Z");
+      path("M 13 -19 Q -3 -29 21 -47 Q 46 -38 34 -17 L 25 -8 Z");
+    } else if (variant === "beaver") {
+      path("M -17 43 Q -54 3 -32 -31 Q 0 -56 32 -31 Q 54 3 17 43 Z");
+      line(
+        "M -27 -25 L 26 20 M -34 -6 L 15 37 M -9 -39 L 35 0 M 27 -25 L -26 20 M 34 -6 L -15 37 M 9 -39 L -35 0",
+      );
+    } else if (variant === "fox") {
       path(
         "M -40 38 Q 1 33 -6 -5 Q -10 -31 43 -43 Q 30 -20 40 2 Q 47 39 -9 44 Z",
       );
@@ -176,7 +296,19 @@ export function drawStamp(
     }
   } else if (tool === "paws") {
     for (const x of [-25, 25]) {
-      if (variant === "bird") {
+      if (variant === "frog") {
+        path(
+          `M ${x - 8} -27 L ${x + 8} -27 L ${x + 9} 5 L ${x + 21} 26 L ${x + 5} 20 L ${x} 37 L ${x - 7} 20 L ${x - 22} 26 L ${x - 9} 5 Z`,
+        );
+      } else if (variant === "bear") {
+        oval(x, 9, 20, 29, color);
+        oval(x, 14, 11, 13, "#ffc5d9");
+        for (const dx of [-13, 0, 13])
+          path(
+            `M ${x + dx - 4} -13 L ${x + dx} -34 L ${x + dx + 4} -13 Z`,
+            "#fff4df",
+          );
+      } else if (variant === "bird") {
         context.strokeStyle = "#49334b";
         context.lineWidth = 9;
         const toes = `M ${x} -26 L ${x} 12 M ${x - 16} 29 L ${x} 12 L ${x + 16} 29 M ${x} 12 L ${x} 35`;
@@ -205,6 +337,8 @@ export function drawStamp(
         oval(x, 14, 9, 7, "#ffc5d9");
       }
     }
+  } else {
+    drawAnimalPart(context, { tool, variant, color, oval, path, line });
   }
   context.restore();
 }

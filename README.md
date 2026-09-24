@@ -41,12 +41,12 @@ Lokalne `npm run build` nadal używa względnych ścieżek (`base: "./"`). Ten s
 
 ## Co już potrafimy?
 
-- Rysować pędzlem, cienkim ołówkiem i sprayem; wymazywać gumką.
+- Rysować pędzlem, flamastrem z czarną obwódką, cienkim ołówkiem i sprayem; wymazywać gumką.
 - Wypełniać wiaderkiem zamknięte obszary aktywnej warstwy kolorem, tęczą lub wzorem.
 - Wybierać kolor z palety lub ustawić własny, zmieniać wielkość narzędzia.
 - Rysować tęczą: kolor zmienia się w czasie prowadzenia kreski.
-- Rysować oczy, ogony, uszy i łapy przez przeciąganie, z podglądem wielkości; wybierać po cztery odmiany każdego dodatku i jego obrót.
-- Malować tygrysimi paskami, kocimi cętkami, wzorem żyrafy, zebry i futerka.
+- Rysować 12 rodzajów zwierzęcych dodatków przez przeciąganie, z podglądem wielkości; wybierać po sześć odmian każdego dodatku (łącznie 72) i jego obrót.
+- Malować dziesięcioma zwierzęcymi wzorami, w tym krowimi łatkami, dalmatyńczykiem, rybimi łuskami, pawimi piórami i biedronką.
 - Sypać kolorowy piasek, który spada i usypuje się na kreskach tej samej warstwy.
 - Pracować w różowej pracowni z delikatnymi gwiazdkami, słoneczkami i serduszkami.
 - Włączyć żartobliwy tryb ciemny: pracownię zastępuje kotek śpiący w łóżku. Tryb jasny przywraca rysunek i historię cofania.
@@ -66,13 +66,15 @@ Czcionki korzystają z lokalnych fontów systemowych (Trebuchet MS, Comic Sans M
 
 ## Zwierzątka, tęcza i piasek
 
-W sekcji **Zwierzątka Ali** wybierz **Oczy**, **Ogon**, **Uszy** lub **Łapy**, a potem odmianę z obrazkiem. Naciśnij i przeciągnij po kartce, tak jak przy rysowaniu koła — dodatek rośnie razem z ruchem dłoni. Możesz przeciągać w każdą stronę; puszczenie kończy rysowanie. Obrót ustawisz suwakiem. Samo kliknięcie przybija stempelek o stałej wielkości 100 pikseli. Cały dodatek cofniesz jednym kliknięciem. Przerwanie gestu przez przeglądarkę usuwa jego podgląd.
+W sekcji **Zwierzątka Ali** wybierz **Oczy**, **Ogon**, **Uszy**, **Łapy**, **Noski**, **Pyszczki**, **Wąsy**, **Rogi**, **Skrzydła**, **Płetwy**, **Grzywy** lub **Brzuszki**, a potem odmianę z obrazkiem. Naciśnij i przeciągnij po kartce, tak jak przy rysowaniu koła — dodatek rośnie razem z ruchem dłoni. Możesz przeciągać w każdą stronę; puszczenie kończy rysowanie. Kliknięcie lub drobny ruch do 12 pikseli na ekranie przybija stempelek o domyślnej wielkości 100 pikseli. Lekko przezroczysty dodatek możesz ponownie złapać i poprawić. Przytrzymaj go lewym przyciskiem myszy i przeciągnij, aby przesunąć. Trzymając przycisk, kręć kółkiem myszy, aby obracać dodatek wokół jego środka (po 15°). Kółko działa też podczas wstawiania. Podczas trzymania dodatek pozostaje lekko przezroczysty; po puszczeniu płynnie odzyskuje pełny kolor. Pełny kolor oznacza koniec czasu na poprawkę. Po wybraniu innej czynności dodatek także staje się zwykłą częścią obrazu. Zapis i eksport zawsze zachowują pełne kolory. Przesuwanie działa też palcem i rysikiem. Wstawienie i każdą zakończoną poprawkę można cofnąć. Przerwanie poprawki lub klawisz Escape przywraca położenie sprzed złapania.
 
-Do wyboru są oczy okrągłe, kocie, z rzęsami i śpiące; ogony zakręcone, lisie, wiewiórcze i królicze; uszy kocie, królicze, misiowe i pieska; łapy kocie, pieska, ptasie oraz kopytka. Wybór odmiany jest pamiętany przy przełączaniu narzędzi. Dodatki trafiają na aktywną warstwę i stają się pikselami, jak kreska. Przybornik dopasowuje się do dostępnego miejsca: od dwóch do czterech narzędzi w wierszu. Na komputerze oba boczne panele przewijają się niezależnie od kartki i pozostają pod ręką podczas przewijania strony. Na telefonie sekcje układają się jedna pod drugą.
+Każdy z 12 rodzajów ma sześć podpisanych odmian z obrazkami. Wśród nowych dodatków są m.in. ryjek, dziobek, żabi uśmiech, rogi jednorożca, skrzydła motyla, płetwa rekina i żółwia skorupa. Wybór odmiany jest pamiętany przy przełączaniu narzędzi. Dodatki trafiają na aktywną warstwę; zapis i eksport zachowują je jako piksele, jak kreskę. Przybornik dopasowuje się do dostępnego miejsca: od dwóch do czterech narzędzi w wierszu. Na komputerze oba boczne panele przewijają się niezależnie od kartki i pozostają pod ręką podczas przewijania strony. Na telefonie sekcje układają się jedna pod drugą.
+
+**Flamaster** rysuje wybranym kolorem z czarną obwódką. Wielkość ustalasz suwakiem. Obwódka otacza całą kreskę, także na zakrętach i skrzyżowaniach jednego ruchu. Działają również tęcza i zwierzęce wzory; jeden ruch to jeden krok cofania.
 
 Przycisk **Tęczowy** w palecie włącza zmieniające się kolory pędzla, ołówka, sprayu i sypanego piasku. Kształty oraz tekst dostają tęczowe przejście kolorów, podobnie jak zwierzęce dodatki. Kliknięcie zwykłego koloru wyłącza tęczę. Gumka nadal wymazuje.
 
-W sekcji **Zwierzęce wzory** wybierz **Tygrysie paski**, **Kocie cętki**, **Żyrafę**, **Zebrę** lub **Futerko**. Wzór zastępuje kolor pędzla, ołówka, sprayu, kształtów, napisów i kolorowych części zwierzątek; działa też z piaskiem. Najłatwiej zobaczysz go przy większej grubości kreski. Wybór zwykłego lub własnego koloru wyłącza wzór, a gumka wciąż wymazuje. Wzory zapisują się razem z warstwami w JSON oraz w płaskim eksporcie PNG i WebP.
+W sekcji **Zwierzęce wzory** wybierz **Tygrysie paski**, **Kocie cętki**, **Żyrafę**, **Zebrę**, **Futerko**, **Krowie łatki**, **Dalmatyńczyka**, **Rybie łuski**, **Pawie pióra** lub **Biedronkę**. Wzór zastępuje kolor pędzla, flamastra, ołówka, sprayu, kształtów, napisów i kolorowych części zwierzątek; działa też z piaskiem. Najłatwiej zobaczysz go przy większej grubości kreski. Wybór zwykłego lub własnego koloru wyłącza wzór, a gumka wciąż wymazuje. Wzory zapisują się razem z warstwami w JSON oraz w płaskim eksporcie PNG i WebP.
 
 Wybierz **Piasek**, kolor oraz wielkość strumienia, a następnie przytrzymaj mysz, palec lub rysik nad kartką. Ziarenka przyspieszają w dół, zsuwają się na boki i tworzą kupkę. Zatrzymują się na dnie kartki oraz na dowolnych nieprzezroczystych pikselach **tej samej warstwy**, również białych i częściowo przezroczystych. Tło kartki i pozostałe warstwy nie zatrzymują piasku.
 
@@ -104,11 +106,14 @@ Prosty JavaScript w modułach ES, HTML i CSS; Canvas 2D obsługuje rysowanie. [V
 
 - `src/main.js` — interfejs i obsługa przycisków, historii oraz gestów.
 - `src/drawing.js` — kreski, spray i kształty.
+- `src/marker.js` — kolorowa kreska flamastra z ciągłą czarną obwódką.
+- `src/animal-parts.js` — rysowanie nosków, pyszczków, wąsów, rogów, skrzydeł, płetw, grzyw i brzuszków.
 - `src/fill.js` — wypełnianie połączonych obszarów na aktywnej warstwie.
 - `src/backgrounds.js` — kolory tła, wybór krajobrazów i ich miniatury.
 - `src/landscapes.js` — rysowanie oceanu, rafy, miasta, dżungli i Arktyki.
 - `src/colors.js` — zmieniające się kolory tęczy i tęczowe przejścia.
-- `src/stamps.js` — odmiany części zwierzątek, ich rysowanie i rozciąganie.
+- `src/stamp-feedback.js` — chwilowy podgląd przezroczystości podczas poprawiania dodatku.
+- `src/stamps.js` — odmiany części zwierzątek, ich rysowanie, rozciąganie i wykrywanie chwytu po obrocie.
 - `src/patterns.js` — lokalnie rysowane kafelki zwierzęcych wzorów.
 - `src/sand.js` — opadanie ziarenek i przeszkody na aktywnej warstwie.
 - `assets/decorations.svg`, `assets/sleeping-cat.svg` — lokalne dekoracje i śpiąca maskotka.

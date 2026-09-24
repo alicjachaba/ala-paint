@@ -49,9 +49,12 @@ export function createSand(layerCanvas) {
         if (free(grain.x, grain.y + 1)) {
           grain.y++;
         } else {
-          const direction = Math.random() < 0.5 ? -1 : 1;
-          const slide = [direction, -direction].find((dx) =>
-            free(grain.x + dx, grain.y + 1),
+          // Ziarenko ma szerokość dwóch pikseli. Musi zsunąć się o całą
+          // szerokość, inaczej zahacza o sąsiada i buduje pionowy słupek.
+          const direction = (Math.random() < 0.5 ? -1 : 1) * grainSize;
+          const slide = [direction, -direction].find(
+            (dx) =>
+              free(grain.x + dx, grain.y) && free(grain.x + dx, grain.y + 1),
           );
           if (slide !== undefined) {
             grain.x += slide;

@@ -2,6 +2,41 @@
 
 Nazwa pliku `HISTORA.md` jest zgodna z ustaleniem na początku projektu.
 
+## 2026-09-24 — Więcej zwierzątek, flamaster i usypywanie piasku
+
+- Rozbudowaliśmy kolekcję z 4 do 12 rodzajów dodatków i z 4 do 6 odmian każdego rodzaju: razem 72 podpisane obrazki. Do oczu, ogonów, uszu i łap dołączyły noski, pyszczki, wąsy, rogi, skrzydła, płetwy, grzywy i brzuszki. Nowe części rysuje osobny moduł `animal-parts.js`; zachowaliśmy rozciąganie, obrót, kolory, wzory, cofanie i pamiętanie wybranej odmiany.
+- Dodaliśmy **Flamaster**: kolorowa kreska ma czarną obwódkę. Kolor i obrys powstają na osobnych płótnach, dzięki czemu jeden gest zachowuje ciągły kolor na łączeniach i skrzyżowaniach. Działają tęcza, wzory, mysz, dotyk i rysik; cały ruch jest jednym krokiem historii i trafia na aktywną warstwę.
+- Dodaliśmy pięć zwierzęcych wzorów: **Krowie łatki**, **Dalmatyńczyk**, **Rybie łuski**, **Pawie pióra** i **Biedronka**. Razem jest ich 10. Kafelki nadal powstają lokalnie w Canvas.
+- Usunęliśmy z podpowiedzi komentarze o sekundzie na poprawkę. Możliwość przesuwania i obracania ostatniego dodatku oraz sygnał przezroczystości nadal działają.
+- Poprawiliśmy zsuwanie piasku: ziarenka przesuwają się na bok o swoją szerokość, więc nie zaczepiają o sąsiednie ziarenka i tworzą rozszerzającą się kupkę. Zachowaliśmy przyspieszanie pod wpływem grawitacji, przeszkody aktywnej warstwy, osadzanie po puszczeniu, cofanie i zapis.
+- Uzupełniliśmy instrukcję i lokalny zestaw ikon Lucide. Bez nowych zależności i usług zewnętrznych.
+
+Sprawdzenie: `npm test -- --workers=2` — wszystkie 55 testów Chromium poprawne, w tym 72 różne odmiany i pamięć wyboru, 10 wzorów, obwódka flamastra, zakręty i skrzyżowania przy dotyku oraz rysiku, cofanie, warstwy, JSON i PNG. Nowy test piasku sprawdza przyspieszanie, zachowanie ziarenek, zakończenie opadania i kształt szerokiej kupki. `npm run build`, `npm run format:check` i `git diff --check` — poprawne. Obejrzeliśmy planszę wszystkich dodatków i wzorów oraz pracownię na komputerze (1440 × 1000) i telefonie (390 × 844).
+
+## 2026-09-24 — Zachowanie dodatku po utracie przechwycenia myszy
+
+- Usunęliśmy anulowanie gestu przy samym `lostpointercapture`. Utrata przechwycenia nie oznacza już usunięcia podglądu przed puszczeniem przycisku. Ruch, puszczenie i rzeczywiste anulowanie odbieramy na całym oknie, również poza kartką.
+- Test celowo zwalniający przechwycenie myszy odtworzył znikanie dodatku przed poprawką. Po zmianie wszystkie cztery części zachowują obraz, końcowy rozmiar i możliwość cofnięcia, także po puszczeniu poza kartką. Faktyczne anulowanie (`pointercancel`, Escape, utrata aktywności okna) nadal chroni poprzedni obraz.
+
+Sprawdzenie: `npm test -- --workers=2` — 52 testy Chromium poprawne; dodatkowo dwa testy szybkiego zaznaczenia i utraty przechwycenia przeszły w zainstalowanym Google Chrome (`channel: chrome`). `npm run build`, formatowanie zmienionych plików i `git diff --check` — poprawne.
+
+## 2026-09-24 — Krótkie i szybkie gesty przy wstawianiu dodatków
+
+- Mały ruch do 12 pikseli ekranowych traktujemy jak kliknięcie: dodatek pozostaje w domyślnej wielkości, zamiast kurczyć się do niemal niewidocznego znaczka. Tolerancja uwzględnia skalę wyświetlanej kartki.
+- Dodaliśmy testy wszystkich czterech części na dużej i pomniejszonej kartce oraz szybkiego zaznaczenia, w tym puszczenia przycisku w nowym miejscu bez pośrednich zdarzeń ruchu. Ostatni punkt gestu nadal pochodzi ze zdarzenia puszczenia przycisku; nie wymaga czekania na podgląd.
+
+Sprawdzenie: `npm test -- --workers=2` — 51 testów Chromium poprawnych; `npm run build` — poprawny. Dwa nowe testy gestów przeszły także w WebKit. Formatowanie zmienionych plików i `git diff --check` — poprawne. Na tym etapie samo skrócenie czasu gestu nie odtworzyło znikania; dalszy test utraty przechwycenia opisano powyżej.
+
+## 2026-09-24 — Chwila na przesunięcie i obrót dodatku
+
+- Po wstawieniu oczu, uszu, ogona lub łap przez sekundę można ponownie złapać ostatni dodatek i go przesunąć. Kółko myszy przy wciśniętym lewym przycisku obraca go wokół środka po 15°, także podczas wstawiania. Usunęliśmy suwak „Obrót” i dodaliśmy podpowiedź w przyborniku.
+- Wizualny sygnał: dodatek zaczyna od 70% krycia i przez sekundę płynnie dochodzi do pełnego koloru. Podczas trzymania pozostaje lekko przezroczysty. Podgląd jest osobny od obrazu, więc nie zmienia kolorów zapisu, eksportu ani historii.
+- Złapanie zatrzymuje odliczanie; puszczenie daje kolejną sekundę na poprawkę. Potem albo po wybraniu innej czynności dodatek pozostaje zwykłą częścią obrazu. Przesuwanie korzysta ze wspólnych zdarzeń myszy, dotyku i rysika.
+- Podgląd odtwarza rysunek spod dodatku, bez śladów i usuwania wcześniejszych kresek. Cofnij/Ponów obejmują każdą zakończoną poprawkę. Anulowanie gestu, Escape i utrata aktywności okna zachowują obraz sprzed poprawki. Format JSON pozostaje w wersji 2; zapis i eksport zawierają ostateczny obraz.
+- Uzupełniliśmy README i testy przesuwania wszystkich części, obrotu w obie strony, czasu na poprawkę, cofania, anulowania oraz zapisu i eksportu.
+
+Sprawdzenie: `npm test -- --workers=2` — 49 testów Chromium poprawnych. Testy obejmują przesuwanie wszystkich części i dotykiem, obrót kółkiem w obie strony, chwyt obróconego elementu, Escape i anulowanie, zatrzymanie oraz odnowienie czasu, stopniowe krycie, cofanie/ponawianie, warstwy, JSON i PNG. `npm run build`, formatowanie zmienionych plików oraz `git diff --check` — poprawne.
+
 ## 2026-09-22 — Dopasowanie przy zmianie okna
 
 - Podgląd reaguje od razu na zmianę szerokości i wysokości okna oraz obrót telefonu. CSS dopasowuje go proporcjonalnie do obu wymiarów ramki, bez przycinania i rozciągania obrazu. Gdy ogranicza nas wysokość, zmniejsza się także szerokość podglądu.

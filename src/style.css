@@ -489,6 +489,7 @@ input[type="range"] {
   vertical-align: middle;
 }
 .paper {
+  position: relative;
   background: #fff;
   box-shadow:
     0 6px 22px #59476c12,
@@ -513,6 +514,13 @@ input[type="range"] {
   height: auto;
   touch-action: none;
   cursor: crosshair;
+}
+.stamp-feedback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 .canvas-bottom {
   min-height: 44px;

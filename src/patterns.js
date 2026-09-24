@@ -4,6 +4,11 @@ export const PATTERNS = [
   ["giraffe", "Żyrafa", "#f9dfa0"],
   ["zebra", "Zebra", "#fffaf1"],
   ["fur", "Futerko", "#c59b7b"],
+  ["cow", "Krowie łatki", "#fffaf1"],
+  ["dalmatian", "Dalmatyńczyk", "#ffffff"],
+  ["scales", "Rybie łuski", "#80d4cb"],
+  ["peacock", "Pawie pióra", "#387f86"],
+  ["ladybug", "Biedronka", "#ef6363"],
 ];
 
 const tiles = new Map();
@@ -86,6 +91,70 @@ export function patternTile(id) {
       );
       ctx.closePath();
       ctx.fill();
+    }
+  } else if (id === "cow") {
+    ctx.fillStyle = "#302e38";
+    for (const data of [
+      "M 2 5 Q 15 -5 27 8 Q 22 18 29 26 Q 18 37 8 24 Q -3 22 2 5 Z",
+      "M 40 30 Q 58 18 63 35 Q 52 42 60 54 Q 45 67 33 54 Q 28 41 40 30 Z",
+    ])
+      ctx.fill(new Path2D(data));
+  } else if (id === "dalmatian" || id === "ladybug") {
+    ctx.fillStyle = "#302e38";
+    for (const [x, y, r] of id === "ladybug"
+      ? [
+          [16, 16, 9],
+          [48, 48, 9],
+        ]
+      : [
+          [11, 13, 6],
+          [37, 9, 4],
+          [52, 29, 7],
+          [22, 39, 8],
+          [8, 57, 4],
+          [43, 55, 5],
+        ]) {
+      ctx.beginPath();
+      ctx.ellipse(
+        x,
+        y,
+        r,
+        id === "dalmatian" ? r * 0.8 : r,
+        0.4,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+    }
+  } else if (id === "scales") {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#287d8c";
+    for (let y = -16; y <= 64; y += 16) {
+      for (let x = -16; x <= 80; x += 32) {
+        const offset = ((y / 16) % 2) * 16;
+        ctx.beginPath();
+        ctx.arc(x + offset, y, 16, 0, Math.PI);
+        ctx.fillStyle = y % 32 ? "#9be4c0" : "#80d4cb";
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+  } else if (id === "peacock") {
+    for (const [x, y] of [
+      [16, 16],
+      [48, 48],
+    ]) {
+      for (const [rx, ry, fill] of [
+        [13, 17, "#83b976"],
+        [9, 12, "#e9c263"],
+        [6, 8, "#389ca8"],
+        [3, 5, "#303d75"],
+      ]) {
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
     }
   } else if (id === "fur") {
     ctx.lineWidth = 1;

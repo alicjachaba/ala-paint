@@ -1,6 +1,14 @@
 // Tylko ikony używane przez Ala Paint trafiają do lokalnej kopii biblioteki.
 export {
   createIcons,
+  PencilLine,
+  Heart,
+  Smile,
+  Cat,
+  Fish,
+  Feather,
+  Crown,
+  Shell,
   Paintbrush,
   PaintBucket,
   Pencil,

@@ -355,8 +355,9 @@ test("każde zwierzątko daje się cofnąć, obrócić i zachować w projekcie",
   const blank = await imageOf(page);
   for (const name of ["Oczy", "Ogon", "Uszy", "Łapy"]) {
     await page.getByRole("button", { name, exact: true }).click();
-    await setRange(page, "#stamp-rotation", 45);
-    await page.locator("#drawing").click({ position: { x: 140, y: 120 } });
+    await dragPreview(page, { x: 250, y: 200 }, { x: 250, y: 200 });
+    await rotateHeldStamp(page, 45);
+    await page.mouse.up();
     expect(await imageOf(page)).not.toBe(blank);
     await page.getByRole("button", { name: "Cofnij", exact: true }).click();
     await expect.poll(() => imageOf(page)).toBe(blank);
@@ -612,13 +613,28 @@ test("zwierzątka rosną przy przeciąganiu w obu kierunkach, a podgląd nie zos
 test("wszystkie odmiany zwierzątek mają różne kształty i zapamiętany wybór", async ({
   page,
 }) => {
+  test.setTimeout(120000);
+  await expect(page.locator(".stamp-grid button")).toHaveCount(12);
   const blank = await imageOf(page);
-  for (const tool of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+  for (const tool of [
+    "Oczy",
+    "Uszy",
+    "Ogon",
+    "Łapy",
+    "Noski",
+    "Pyszczki",
+    "Wąsy",
+    "Rogi",
+    "Skrzydła",
+    "Płetwy",
+    "Grzywy",
+    "Brzuszki",
+  ]) {
     await page.getByRole("button", { name: tool, exact: true }).click();
     const choices = page.locator("#stamp-variants button");
-    await expect(choices).toHaveCount(4);
+    await expect(choices).toHaveCount(6);
     const images = new Set();
-    for (let index = 0; index < 4; index++) {
+    for (let index = 0; index < 6; index++) {
       await choices.nth(index).click();
       await expect(choices.nth(index)).toHaveAttribute("aria-pressed", "true");
       await stroke(page, { x: 250, y: 150 }, { x: 650, y: 500 });
@@ -628,10 +644,10 @@ test("wszystkie odmiany zwierzątek mają różne kształty i zapamiętany wybó
       await page.locator("#undo").click();
       await expect.poll(() => imageOf(page)).toBe(blank);
     }
-    expect(images.size).toBe(4);
+    expect(images.size).toBe(6);
     await page.getByRole("button", { name: "Pędzel", exact: true }).click();
     await page.getByRole("button", { name: tool, exact: true }).click();
-    await expect(choices.nth(3)).toHaveAttribute("aria-pressed", "true");
+    await expect(choices.nth(5)).toHaveAttribute("aria-pressed", "true");
   }
 });
 
@@ -670,6 +686,11 @@ test("zwierzęce wzory malują wieloma barwami, cofają się i zachowują w proj
     "Żyrafa",
     "Zebra",
     "Futerko",
+    "Krowie łatki",
+    "Dalmatyńczyk",
+    "Rybie łuski",
+    "Pawie pióra",
+    "Biedronka",
   ]) {
     await page.getByRole("button", { name, exact: true }).click();
     await stroke(page, { x: 150, y: 200 }, { x: 750, y: 200 });
@@ -685,7 +706,7 @@ test("zwierzęce wzory malują wieloma barwami, cofają się i zachowują w proj
     await page.locator("#undo").click();
     await expect.poll(() => imageOf(page)).toBe(blank);
   }
-  expect(looks.size).toBe(5);
+  expect(looks.size).toBe(10);
   await page.locator("#redo").click();
   await expect.poll(() => imageOf(page)).not.toBe(blank);
   await page.getByRole("button", { name: "Uszy", exact: true }).click();
@@ -754,6 +775,7 @@ test("dotyk rozciąga dodatek na telefonie, a przybornik mieści odmiany i wzory
   await openExampleProject(page);
   await page.getByRole("button", { name: "Uszy", exact: true }).click();
   await page.getByRole("button", { name: "Królicze", exact: true }).click();
+  await pauseStampClock(page);
   const blank = await imageOf(page);
   const canvas = page.locator("#drawing");
   await canvas.scrollIntoViewIfNeeded();
@@ -773,6 +795,26 @@ test("dotyk rozciąga dodatek na telefonie, a przybornik mieści odmiany i wzory
   });
   expect(await imageOf(page)).not.toBe(blank);
   expect((await paintedBounds(page)).width).toBeGreaterThan(300);
+  const placed = await imageOf(page);
+  const bounds = await paintedBounds(page);
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: box.x + box.width * 0.45, y: box.y + box.height * 0.5 }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: box.x + box.width * 0.6, y: box.y + box.height * 0.6 }],
+  });
+  await page.clock.fastForward(2000);
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  const moved = await paintedBounds(page);
+  expect(moved.left - bounds.left).toBeCloseTo(144, -1);
+  expect(moved.top - bounds.top).toBeCloseTo(64, -1);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(placed);
   await page.locator("#undo").click();
   await expect.poll(() => imageOf(page)).toBe(blank);
   await mobile.close();
@@ -812,8 +854,9 @@ test("tęczowe dodatki mają wiele kolorów także po obrocie i kliknięciu", as
   await page.getByRole("button", { name: "Tęczowy", exact: true }).click();
   const blank = await imageOf(page);
   for (const rotation of [0, 45]) {
-    await setRange(page, "#stamp-rotation", rotation);
-    await stroke(page, { x: 200, y: 200 }, { x: 600, y: 500 });
+    await dragPreview(page, { x: 200, y: 200 }, { x: 600, y: 500 });
+    await rotateHeldStamp(page, rotation);
+    await page.mouse.up();
     const hues = await page.locator("#drawing").evaluate((canvas) => {
       const data = canvas
         .getContext("2d")
@@ -833,7 +876,6 @@ test("tęczowe dodatki mają wiele kolorów także po obrocie i kliknięciu", as
     await page.locator("#undo").click();
     await expect.poll(() => imageOf(page)).toBe(blank);
   }
-  await setRange(page, "#stamp-rotation", 0);
   const canvas = page.locator("#drawing");
   await canvas.scrollIntoViewIfNeeded();
   const box = await canvas.boundingBox();
@@ -1031,4 +1073,587 @@ test("panele przewijają się niezależnie, a strona zachowuje szerokość okna"
       .click();
     await page.locator("#add-layer").click();
   }
+});
+
+async function pauseStampClock(page) {
+  const time = new Date("2026-09-24T12:00:00Z");
+  await page.clock.install({ time });
+  await page.clock.pauseAt(new Date(time.getTime() + 1000));
+}
+
+async function rotateHeldStamp(page, degrees) {
+  for (let angle = 0; angle < Math.abs(degrees); angle += 15) {
+    await page.locator("#drawing").dispatchEvent("wheel", {
+      deltaY: Math.sign(degrees) * 100,
+      buttons: 1,
+      cancelable: true,
+    });
+  }
+}
+
+test("ostatni dodatek można przesunąć bez śladów i cofnąć poprawkę", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  await stroke(page, { x: 100, y: 200 }, { x: 450, y: 200 });
+  const background = await imageOf(page);
+  for (const name of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await expect(page.locator("#stamp-rotation")).toHaveCount(0);
+    await stroke(page, { x: 150, y: 150 }, { x: 350, y: 250 });
+    const placed = await imageOf(page);
+    await page.clock.fastForward(900);
+    // Chwyt poza środkiem nie może powodować przeskoku dodatku.
+    await dragPreview(page, { x: 270, y: 210 }, { x: 570, y: 410 });
+    await page.clock.fastForward(3000);
+    const preview = await imageOf(page);
+    await page.mouse.up();
+    expect(await imageOf(page)).toBe(preview);
+    const expected = await page.evaluate(
+      async ({ background, tool }) => {
+        const { drawStamp } = await import("/src/stamps.js");
+        const image = new Image();
+        image.src = background;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = 960;
+        canvas.height = 640;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0);
+        drawStamp(
+          ctx,
+          { x: 550, y: 400 },
+          { tool, color: "#7655ce", width: 200, height: 100 },
+        );
+        return canvas.toDataURL();
+      },
+      {
+        background,
+        tool: { Oczy: "eyes", Uszy: "ears", Ogon: "tail", Łapy: "paws" }[name],
+      },
+    );
+    // Rysowanie na przezroczystej warstwie i na białym tle może różnić się
+    // zaokrągleniem koloru na wygładzonych krawędziach.
+    const difference = await page.evaluate(
+      async ({ preview, expected }) => {
+        const pixels = async (source) => {
+          const image = new Image();
+          image.src = source;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = 960;
+          canvas.height = 640;
+          const context = canvas.getContext("2d");
+          context.drawImage(image, 0, 0);
+          return context.getImageData(0, 0, 960, 640).data;
+        };
+        const actual = await pixels(preview);
+        const reference = await pixels(expected);
+        return (
+          actual.reduce(
+            (sum, value, i) => sum + Math.abs(value - reference[i]),
+            0,
+          ) / actual.length
+        );
+      },
+      { preview, expected },
+    );
+    expect(difference).toBeLessThan(0.01);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(placed);
+    await page.locator("#redo").click();
+    await expect.poll(() => imageOf(page)).toBe(preview);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(placed);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(background);
+  }
+});
+
+test("kółko obraca trzymany dodatek wokół środka i nie przewija strony", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  await page.getByRole("button", { name: "Uszy", exact: true }).click();
+  await stroke(page, { x: 200, y: 200 }, { x: 600, y: 400 });
+  const placed = await imageOf(page);
+  const beforeBounds = await paintedBounds(page);
+  await dragPreview(page, { x: 400, y: 300 }, { x: 400, y: 300 });
+  const scroll = await page.evaluate(() => ({ x: scrollX, y: scrollY }));
+  await page.mouse.wheel(0, 100);
+  await expect.poll(() => imageOf(page)).not.toBe(placed);
+  await rotateHeldStamp(page, 75);
+  const rotated = await paintedBounds(page);
+  expect(rotated.width).toBeCloseTo(beforeBounds.height, -1);
+  expect(rotated.height).toBeCloseTo(beforeBounds.width, -1);
+  expect(await page.evaluate(() => ({ x: scrollX, y: scrollY }))).toEqual(
+    scroll,
+  );
+  await rotateHeldStamp(page, -90);
+  expect(await imageOf(page)).toBe(placed);
+  await rotateHeldStamp(page, 45);
+  const preview = await imageOf(page);
+  await page.mouse.up();
+  expect(await imageOf(page)).toBe(preview);
+  // Bez trzymania przycisku kółko nie edytuje dodatku ani nie blokuje przewijania.
+  const prevented = await page.locator("#drawing").evaluate((canvas) => {
+    const event = new WheelEvent("wheel", { deltaY: 100, cancelable: true });
+    canvas.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(prevented).toBe(false);
+  expect(await imageOf(page)).toBe(preview);
+  // Ten punkt leży w obróconej ramce, ale poza ramką sprzed obrotu.
+  await dragPreview(page, { x: 520, y: 420 }, { x: 550, y: 450 });
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  expect(await imageOf(page)).toBe(preview);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(placed);
+});
+
+test("po sekundzie dodatek staje się obrazem, a czas odnawia się po poprawce", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  await page.getByRole("button", { name: "Oczy", exact: true }).click();
+  await stroke(page, { x: 200, y: 200 }, { x: 400, y: 300 });
+  await page.clock.fastForward(900);
+  await stroke(page, { x: 300, y: 250 }, { x: 500, y: 250 });
+  await page.clock.fastForward(900);
+  await stroke(page, { x: 500, y: 250 }, { x: 700, y: 250 });
+  const moved = await imageOf(page);
+  expect((await paintedBounds(page)).left).toBeGreaterThan(590);
+  await page.clock.fastForward(1001);
+  await stroke(page, { x: 700, y: 250 }, { x: 300, y: 450 });
+  // Stary dodatek pozostaje po prawej; przeciągnięcie tworzy teraz nowy.
+  expect((await paintedBounds(page)).right).toBeGreaterThan(780);
+  expect((await paintedBounds(page)).left).toBeLessThan(400);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(moved);
+});
+
+test("anulowanie poprawki zachowuje obraz, a zapis i eksport zawierają przesunięty dodatek", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  await stroke(page);
+  await page.locator("#add-layer").click();
+  await page.getByRole("button", { name: "Ogon", exact: true }).click();
+  await stroke(page, { x: 200, y: 200 }, { x: 400, y: 400 });
+  const placed = await imageOf(page);
+  await dragPreview(page, { x: 300, y: 300 }, { x: 550, y: 350 });
+  await rotateHeldStamp(page, 45);
+  await page
+    .locator("#drawing")
+    .dispatchEvent("pointercancel", { pointerId: 1 });
+  await page.mouse.up();
+  expect(await imageOf(page)).toBe(placed);
+  // Anulowanie poprawki nie dodaje kroku historii.
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).not.toBe(placed);
+  await stroke(page, { x: 200, y: 200 }, { x: 400, y: 400 });
+  await stroke(page, { x: 300, y: 300 }, { x: 550, y: 350 });
+  const final = await imageOf(page);
+  const png = await getDownload(page, '[data-export="png"]');
+  expect(
+    `data:image/png;base64,${(await readFile(await png.path())).toString("base64")}`,
+  ).toBe(final);
+  const file = await getDownload(page, "#save-project");
+  await page.locator("#new").click();
+  await page.locator("#file-input").setInputFiles(await file.path());
+  await expect.poll(() => imageOf(page)).toBe(final);
+  await expect(page.locator(".layer-row")).toHaveCount(2);
+});
+
+test("przez sekundę dodatek odzyskuje pełny kolor, a chwyt zatrzymuje ten sygnał", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  await page
+    .getByRole("button", { name: "Przezroczyste", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Oczy", exact: true }).click();
+  await stroke(page, { x: 200, y: 200 }, { x: 400, y: 300 });
+  const final = await imageOf(page);
+  const feedback = page.locator(".stamp-feedback");
+  const opacityAtEye = () =>
+    feedback.evaluate(
+      (canvas) => canvas.getContext("2d").getImageData(250, 245, 1, 1).data[3],
+    );
+  await expect(feedback).toBeVisible();
+  const start = await opacityAtEye();
+  expect(start).toBeGreaterThan(160);
+  expect(start).toBeLessThan(200);
+  await page.clock.fastForward(500);
+  const half = await opacityAtEye();
+  expect(half).toBeGreaterThan(start);
+  expect(half).toBeLessThan(240);
+  await dragPreview(page, { x: 300, y: 250 }, { x: 300, y: 250 });
+  await page.clock.fastForward(2000);
+  await expect(feedback).toBeVisible();
+  expect(await opacityAtEye()).toBe(start);
+  await page.mouse.up();
+  await page.clock.fastForward(1001);
+  await expect(feedback).toBeHidden();
+  await expect(page.locator("#drawing")).toHaveCSS("opacity", "1");
+  expect(await imageOf(page)).toBe(final);
+  expect((await pixels(page, 250, 245))[3]).toBe(255);
+});
+
+test("krótki ruch wstawia pełny dodatek także na pomniejszonej kartce", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  const blank = await imageOf(page);
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 700, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const name of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+      await page.getByRole("button", { name, exact: true }).click();
+      const canvas = page.locator("#drawing");
+      await canvas.scrollIntoViewIfNeeded();
+      const box = await canvas.boundingBox();
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await page.mouse.click(x, y);
+      const clicked = await imageOf(page);
+      expect(clicked).not.toBe(blank);
+      await page.locator("#undo").click();
+      await expect.poll(() => imageOf(page)).toBe(blank);
+      for (const [dx, dy] of [
+        [6, 6],
+        [-8, 0],
+        [0, -8],
+      ]) {
+        await canvas.scrollIntoViewIfNeeded();
+        const position = await canvas.boundingBox();
+        await page.mouse.move(
+          position.x + position.width / 2,
+          position.y + position.height / 2,
+        );
+        await page.mouse.down();
+        await page.mouse.move(
+          position.x + position.width / 2 + dx,
+          position.y + position.height / 2 + dy,
+        );
+        // Mały ruch nie zmniejsza ani podglądu, ani gotowego dodatku.
+        expect(await imageOf(page)).toBe(clicked);
+        await page.mouse.up();
+        expect(await imageOf(page)).toBe(clicked);
+        await page.locator("#undo").click();
+        await expect.poll(() => imageOf(page)).toBe(blank);
+      }
+    }
+  }
+});
+
+test("szybkie zaznaczenie kończy dodatek w miejscu puszczenia przycisku", async ({
+  page,
+  browserName,
+}) => {
+  await pauseStampClock(page);
+  const blank = await imageOf(page);
+  const client =
+    browserName === "chromium"
+      ? await page.context().newCDPSession(page)
+      : null;
+  for (const name of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await stroke(page, { x: 200, y: 200 }, { x: 500, y: 400 });
+    const expected = await imageOf(page);
+    const expectedBounds = await paintedBounds(page);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+    const canvas = page.locator("#drawing");
+    await canvas.scrollIntoViewIfNeeded();
+    const box = await canvas.boundingBox();
+    const start = {
+      x: box.x + (box.width * 200) / 960,
+      y: box.y + (box.height * 200) / 640,
+    };
+    const end = {
+      x: box.x + (box.width * 500) / 960,
+      y: box.y + (box.height * 400) / 640,
+    };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x, end.y);
+    await page.mouse.up();
+    expect(await imageOf(page)).toBe(expected);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+    // Puszczenie następuje w nowym miejscu bez żadnej pośredniej próbki ruchu.
+    if (client) {
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        x: box.x + (box.width * 200) / 960,
+        y: box.y + (box.height * 200) / 640,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        x: box.x + (box.width * 500) / 960,
+        y: box.y + (box.height * 400) / 640,
+      });
+    } else {
+      await canvas.evaluate((element) =>
+        element.addEventListener(
+          "pointerdown",
+          (event) => {
+            element.dataset.testPointerId = String(event.pointerId);
+          },
+          { once: true },
+        ),
+      );
+      await page.mouse.move(start.x, start.y);
+      await page.mouse.down();
+      await canvas.dispatchEvent("pointerup", {
+        pointerId: Number(await canvas.getAttribute("data-test-pointer-id")),
+        pointerType: "mouse",
+        button: 0,
+        clientX: end.x,
+        clientY: end.y,
+      });
+      await page.mouse.up();
+    }
+    // Zdarzenie syntetyczne w WebKit zachowuje ułamki współrzędnych inaczej
+    // niż prawdziwa mysz. Porównujemy położenie i wielkość gotowego dodatku.
+    const releasedBounds = await paintedBounds(page);
+    for (const key of Object.keys(expectedBounds)) {
+      expect(
+        Math.abs(releasedBounds[key] - expectedBounds[key]),
+      ).toBeLessThanOrEqual(1);
+    }
+    const released = await imageOf(page);
+    await expect(page.locator(".stamp-feedback")).toBeVisible();
+    await page.clock.fastForward(1001);
+    expect(await imageOf(page)).toBe(released);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+});
+
+test("utrata przechwycenia myszy nie usuwa dodatku przed puszczeniem przycisku", async ({
+  page,
+}) => {
+  await pauseStampClock(page);
+  const blank = await imageOf(page);
+  for (const name of ["Oczy", "Uszy", "Ogon", "Łapy"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    // Kończymy poza kartką: puszczenie musi zostać odebrane również poza canvasem.
+    const start = { x: 300, y: 200 };
+    const end = { x: 1000, y: 450 };
+    await stroke(page, start, end);
+    const expected = await imageOf(page);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+    await page.locator("#drawing").evaluate((canvas) => {
+      canvas.addEventListener(
+        "gotpointercapture",
+        (event) => {
+          canvas.releasePointerCapture(event.pointerId);
+        },
+        { once: true },
+      );
+    });
+    await stroke(page, start, end);
+    expect((await paintedBounds(page)).width).toBeGreaterThan(100);
+    expect(await imageOf(page)).toBe(expected);
+    await page.locator("#undo").click();
+    await expect.poll(() => imageOf(page)).toBe(blank);
+  }
+});
+
+test("flamaster ma czarną obwódkę bez szwów, zachowuje warstwy i zapis", async ({
+  page,
+}) => {
+  await stroke(page, { x: 150, y: 400 }, { x: 700, y: 400 });
+  const base = await imageOf(page);
+  await page.locator("#add-layer").click();
+  await page.getByRole("button", { name: "Flamaster", exact: true }).click();
+  await page.getByRole("button", { name: "Czerwony", exact: true }).click();
+  await setRange(page, "#brush-size", 40);
+  await stroke(page, { x: 150, y: 200 }, { x: 700, y: 200 });
+  for (const x of [150, 200, 300, 500, 650, 700]) {
+    expect(await pixels(page, x, 200)).toEqual([239, 99, 99, 255]);
+    expect(await pixels(page, x, 223)).toEqual([0, 0, 0, 255]);
+  }
+  const final = await imageOf(page);
+  await page.locator("#undo").click();
+  await expect.poll(() => imageOf(page)).toBe(base);
+  await page.locator("#redo").click();
+  await expect.poll(() => imageOf(page)).toBe(final);
+  await page
+    .getByRole("button", { name: "Ukryj: Warstwa 2", exact: true })
+    .click();
+  expect(await imageOf(page)).toBe(base);
+  await page
+    .getByRole("button", { name: "Pokaż: Warstwa 2", exact: true })
+    .click();
+  const file = await getDownload(page, "#save-project");
+  await page.locator("#new").click();
+  await page.locator("#file-input").setInputFiles(await file.path());
+  await expect.poll(() => imageOf(page)).toBe(final);
+  const png = await getDownload(page, '[data-export="png"]');
+  expect(
+    `data:image/png;base64,${(await readFile(await png.path())).toString("base64")}`,
+  ).toBe(final);
+  for (const name of ["Tęczowy", "Rybie łuski"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await stroke(page, { x: 150, y: 300 }, { x: 700, y: 300 });
+    expect(await pixels(page, 300, 323)).toEqual([0, 0, 0, 255]);
+    expect(await pixels(page, 200, 300)).not.toEqual(
+      await pixels(page, 500, 300),
+    );
+  }
+});
+
+test("flamaster łączy zakręty i skrzyżowania także przy dotyku i rysiku", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Flamaster", exact: true }).click();
+  await setRange(page, "#brush-size", 40);
+  const canvas = page.locator("#drawing");
+  const client = await page.context().newCDPSession(page);
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  for (const pointerType of ["touch", "pen"]) {
+    await canvas.scrollIntoViewIfNeeded();
+    const box = await canvas.boundingBox();
+    const points = [
+      [200, 200],
+      [500, 200],
+      [500, 400],
+      [350, 400],
+      [350, 100],
+    ];
+    for (let i = 0; i < points.length; i++) {
+      const x = box.x + (points[i][0] * box.width) / 960;
+      const y = box.y + (points[i][1] * box.height) / 640;
+      if (pointerType === "touch") {
+        await client.send("Input.dispatchTouchEvent", {
+          type: i ? "touchMove" : "touchStart",
+          touchPoints: [{ x, y }],
+        });
+      } else {
+        await client.send("Input.dispatchMouseEvent", {
+          type: i ? "mouseMoved" : "mousePressed",
+          pointerType: "pen",
+          button: "left",
+          buttons: 1,
+          clickCount: 1,
+          x,
+          y,
+        });
+      }
+    }
+    if (pointerType === "touch") {
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+      });
+    } else {
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        pointerType: "pen",
+        button: "left",
+        buttons: 0,
+        x: box.x + (350 * box.width) / 960,
+        y: box.y + (100 * box.height) / 640,
+      });
+    }
+    expect(errors).toEqual([]);
+    for (const [x, y] of [
+      [500, 200],
+      [350, 200],
+      [350, 400],
+    ])
+      expect(await pixels(page, x, y)).toEqual([118, 85, 206, 255]);
+    await page.locator("#undo").click();
+    expect(await pixels(page, 350, 200)).toEqual([255, 255, 255, 255]);
+  }
+});
+
+test("grawitacja przyspiesza piasek, a wąski strumień usypuje szeroką kupkę", async ({
+  page,
+}) => {
+  const result = await page.evaluate(async () => {
+    const { createSand } = await import("/src/sand.js");
+    const canvas = document.createElement("canvas");
+    canvas.width = 200;
+    canvas.height = 180;
+    const preview = canvas.cloneNode();
+    const ctx = canvas.getContext("2d");
+    const view = preview.getContext("2d");
+    const sand = createSand(canvas);
+    const originalRandom = Math.random;
+    let seed = 17;
+    Math.random = () =>
+      (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const bounds = () => {
+      view.clearRect(0, 0, 200, 180);
+      view.drawImage(canvas, 0, 0);
+      sand.draw(view);
+      const pixels = view.getImageData(0, 0, 200, 180).data;
+      let top = 180,
+        left = 200,
+        right = -1,
+        count = 0;
+      for (let y = 0; y < 180; y++)
+        for (let x = 0; x < 200; x++) {
+          if (pixels[(y * 200 + x) * 4 + 3]) {
+            top = Math.min(top, y);
+            left = Math.min(left, x);
+            right = Math.max(right, x);
+            count++;
+          }
+        }
+      return { top, left, right, count };
+    };
+    try {
+      sand.pour({ x: 100, y: 10 }, 1, "#ff0000");
+      const start = bounds();
+      for (let i = 0; i < 5; i++) sand.step();
+      const first = bounds();
+      for (let i = 0; i < 5; i++) sand.step();
+      const second = bounds();
+      for (let i = 0; i < 220; i++) {
+        sand.pour({ x: 100, y: 10 }, 1, "#ff0000");
+        for (let j = 0; j < 3; j++) sand.step();
+      }
+      const before = bounds().count;
+      let remaining;
+      for (let i = 0; i < 600; i++) {
+        remaining = sand.step();
+        if (!remaining) break;
+      }
+      const pile = bounds();
+      const heights = [70, 100, 130].map((x) => {
+        for (let y = 0; y < 180; y++)
+          if (ctx.getImageData(x, y, 1, 1).data[3]) return 180 - y;
+        return 0;
+      });
+      return { start, first, second, before, pile, heights, remaining };
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+  expect(result.first.top).toBeGreaterThan(result.start.top);
+  expect(result.second.top - result.first.top).toBeGreaterThan(
+    result.first.top - result.start.top,
+  );
+  expect(result.remaining).toBe(0);
+  expect(result.pile.count).toBe(result.before);
+  expect(result.pile.right - result.pile.left).toBeGreaterThan(65);
+  expect(result.pile.top).toBeGreaterThan(70);
+  expect(result.heights[1]).toBeGreaterThan(result.heights[0]);
+  expect(result.heights[1]).toBeGreaterThan(result.heights[2]);
 });

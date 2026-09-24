@@ -207,6 +207,20 @@ var ArrowDown = [["path", { d: "M12 5v14" }], ["path", { d: "m19 12-7 7-7-7" }]]
 */
 var ArrowUp = [["path", { d: "m5 12 7-7 7 7" }], ["path", { d: "M12 19V5" }]];
 //#endregion
+//#region node_modules/lucide/dist/esm/icons/cat.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Cat = [
+	["path", { d: "M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z" }],
+	["path", { d: "M8 14v.5" }],
+	["path", { d: "M16 14v.5" }],
+	["path", { d: "M11.25 16.25h1.5L12 17l-.75-.75Z" }]
+];
+//#endregion
 //#region node_modules/lucide/dist/esm/icons/check.mjs
 /**
 * @license lucide v1.47.0 - ISC
@@ -237,6 +251,15 @@ var Circle = [["circle", {
 	cy: "12",
 	r: "10"
 }]];
+//#endregion
+//#region node_modules/lucide/dist/esm/icons/crown.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Crown = [["path", { d: "M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" }], ["path", { d: "M5 21h14" }]];
 //#endregion
 //#region node_modules/lucide/dist/esm/icons/download.mjs
 /**
@@ -296,6 +319,37 @@ var EyeOff = [
 	["path", { d: "m2 2 20 20" }]
 ];
 //#endregion
+//#region node_modules/lucide/dist/esm/icons/face-slightly-smiling.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var FaceSlightlySmiling = [
+	["path", { d: "M15 10V9" }],
+	["path", { d: "M16.472 15a6 6 0 01-8.943 0" }],
+	["path", { d: "M9 10V9" }],
+	["circle", {
+		cx: "12",
+		cy: "12",
+		r: "10"
+	}]
+];
+//#endregion
+//#region node_modules/lucide/dist/esm/icons/feather.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Feather = [
+	["path", { d: "M14.086 18.412A2 2 0 0112.67 19H5v-7.672a2 2 0 01.586-1.414L11.75 3.75a6 6 0 118.49 8.49z" }],
+	["path", { d: "M16 8 2 22" }],
+	["path", { d: "M17.488 15H9" }]
+];
+//#endregion
 //#region node_modules/lucide/dist/esm/icons/file-braces.mjs
 /**
 * @license lucide v1.47.0 - ISC
@@ -310,6 +364,22 @@ var FileBraces = [
 	["path", { d: "M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1" }]
 ];
 //#endregion
+//#region node_modules/lucide/dist/esm/icons/fish.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Fish = [
+	["path", { d: "M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z" }],
+	["path", { d: "M18 12v.5" }],
+	["path", { d: "M16 17.93a9.77 9.77 0 0 1 0-11.86" }],
+	["path", { d: "M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33" }],
+	["path", { d: "M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4" }],
+	["path", { d: "m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98" }]
+];
+//#endregion
 //#region node_modules/lucide/dist/esm/icons/folder-open.mjs
 /**
 * @license lucide v1.47.0 - ISC
@@ -318,6 +388,15 @@ var FileBraces = [
 * See the LICENSE file in the root directory of this source tree.
 */
 var FolderOpen = [["path", { d: "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" }]];
+//#endregion
+//#region node_modules/lucide/dist/esm/icons/heart.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Heart = [["path", { d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" }]];
 //#endregion
 //#region node_modules/lucide/dist/esm/icons/hourglass.mjs
 /**
@@ -479,6 +558,19 @@ var PawPrint = [
 	["path", { d: "M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" }]
 ];
 //#endregion
+//#region node_modules/lucide/dist/esm/icons/pencil-line.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var PencilLine = [
+	["path", { d: "M13 21h8" }],
+	["path", { d: "m15 5 4 4" }],
+	["path", { d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" }]
+];
+//#endregion
 //#region node_modules/lucide/dist/esm/icons/pencil.mjs
 /**
 * @license lucide v1.47.0 - ISC
@@ -505,6 +597,15 @@ var Plus = [["path", { d: "M5 12h14" }], ["path", { d: "M12 5v14" }]];
 * See the LICENSE file in the root directory of this source tree.
 */
 var Redo2 = [["path", { d: "m15 14 5-5-5-5" }], ["path", { d: "M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13" }]];
+//#endregion
+//#region node_modules/lucide/dist/esm/icons/shell.mjs
+/**
+* @license lucide v1.47.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Shell = [["path", { d: "M14 11a2 2 0 1 1-4 0 4 4 0 0 1 8 0 6 6 0 0 1-12 0 8 8 0 0 1 16 0 10 10 0 1 1-20 0 11.93 11.93 0 0 1 2.42-7.22 2 2 0 1 1 3.16 2.44" }]];
 //#endregion
 //#region node_modules/lucide/dist/esm/icons/sparkles.mjs
 /**
@@ -682,4 +783,4 @@ var createIcons = ({ icons = {}, nameAttr = "data-lucide", attrs = {}, root = do
 	}
 };
 //#endregion
-export { ArrowDown, ArrowUp, Check, ChevronDown, Circle, Download, Ear, Eraser, Eye, EyeOff, FileBraces as FileJson, FolderOpen, Hourglass, ImageDown, Layers, Minus, Moon, MousePointer2, PaintBucket, Paintbrush, Palette, PawPrint, Pencil, Plus, Redo2, Sparkles, SprayCan, Square, Squirrel, Sun, Trash as Trash2, Type, Undo2, X, createIcons };
+export { ArrowDown, ArrowUp, Cat, Check, ChevronDown, Circle, Crown, Download, Ear, Eraser, Eye, EyeOff, Feather, FileBraces as FileJson, Fish, FolderOpen, Heart, Hourglass, ImageDown, Layers, Minus, Moon, MousePointer2, PaintBucket, Paintbrush, Palette, PawPrint, Pencil, PencilLine, Plus, Redo2, Shell, FaceSlightlySmiling as Smile, Sparkles, SprayCan, Square, Squirrel, Sun, Trash as Trash2, Type, Undo2, X, createIcons };
